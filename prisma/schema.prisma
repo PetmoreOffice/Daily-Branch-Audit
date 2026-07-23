@@ -1,0 +1,119 @@
+// Prisma schema for Branch Audit System
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Zone {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  branches  Branch[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id          String               @id @default(cuid())
+  code        String               @unique
+  name        String
+  zoneId      String
+  zone        Zone                 @relation(fields: [zoneId], references: [id])
+  province    String
+  status      String               @default("เปิดใช้งาน")
+  employees   Employee[]
+  assignments EmployeeAssignment[]
+  audits      Audit[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model Employee {
+  id           String               @id @default(cuid())
+  code         String               @unique
+  firstName    String
+  lastName     String
+  role         String
+  branchId     String
+  currentBranch Branch              @relation(fields: [branchId], references: [id])
+  zoneName     String
+  email        String               @unique
+  phone        String
+  assignments  EmployeeAssignment[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model EmployeeAssignment {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  branchId   String
+  branch     Branch    @relation(fields: [branchId], references: [id])
+  startDate  String
+  endDate    String?
+  createdAt  DateTime  @default(now())
+}
+
+model AuditTemplate {
+  id        String         @id @default(cuid())
+  name      String
+  sections  AuditSection[]
+  audits    Audit[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model AuditSection {
+  id         String        @id @default(cuid())
+  templateId String
+  template   AuditTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name       String
+  order      Int           @default(0)
+  items      AuditItem[]
+}
+
+model AuditItem {
+  id                String            @id @default(cuid())
+  sectionId         String
+  section           AuditSection      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  name              String
+  maxScore          Int               @default(5)
+  minScore          Int               @default(3)
+  requirePhoto      Boolean           @default(false)
+  requireResponsible Boolean          @default(true)
+  results           AuditItemResult[]
+}
+
+model Audit {
+  id         String            @id @default(cuid())
+  date       String
+  branchId   String
+  branch     Branch            @relation(fields: [branchId], references: [id])
+  templateId String
+  template   AuditTemplate     @relation(fields: [templateId], references: [id])
+  auditor    String
+  gps        String?
+  items      AuditItemResult[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+model AuditItemResult {
+  id             String   @id @default(cuid())
+  auditId        String
+  audit          Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  itemId         String
+  item           AuditItem @relation(fields: [itemId], references: [id])
+  score          Int
+  note           String?
+  status         String   @default("ผ่าน")
+  photosBefore   String[] @default([])
+  photosAfter    String[] @default([])
+  responsibleIds String[] @default([])
+  createdAt      DateTime @default(now())
+}
