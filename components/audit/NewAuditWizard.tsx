@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Star, Camera, Search, Check, AlertCircle, MapPin, X } from "lucide-react";
 import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
@@ -206,23 +206,49 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
                   {/* Photo & Tagging controls */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                    {/* Photo upload mock */}
+                    {/* Photo upload - real file input */}
                     {item.requirePhoto && (
                       <div className="space-y-1">
                         <label className="text-xs font-semibold text-audit-slate flex items-center gap-1">
                           <Camera className="w-3.5 h-3.5" /> แนบภาพถ่ายสภาพก่อนแก้ไข (Before)
                         </label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateItem(item.id, {
-                              photosBefore: [...(ans.photosBefore || []), `photo_${Date.now()}.jpg`],
-                            })
-                          }
-                          className="w-full py-2 border-2 border-dashed border-audit-blue/40 hover:border-audit-blue rounded-lg text-xs font-bold text-audit-blue bg-audit-tint/30 transition flex items-center justify-center gap-1.5"
+                        <label
+                          className="w-full py-2 border-2 border-dashed border-audit-blue/40 hover:border-audit-blue rounded-lg text-xs font-bold text-audit-blue bg-audit-tint/30 transition flex items-center justify-center gap-1.5 cursor-pointer"
                         >
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              const urls = files.map((f) => URL.createObjectURL(f));
+                              updateItem(item.id, {
+                                photosBefore: [...(ans.photosBefore || []), ...urls],
+                              });
+                            }}
+                          />
                           + เพิ่มรูปถ่าย ({ans.photosBefore?.length || 0})
-                        </button>
+                        </label>
+                        {/* Thumbnails */}
+                        {(ans.photosBefore?.length || 0) > 0 && (
+                          <div className="flex gap-2 overflow-x-auto py-1.5 max-w-full shrink-0">
+                            {ans.photosBefore!.map((url, i) => (
+                              <div key={i} className="relative shrink-0">
+                                <img src={url} alt={`before-${i}`} className="w-14 h-14 object-cover rounded-lg border border-audit-hairline" />
+                                <button
+                                  type="button"
+                                  onClick={() => updateItem(item.id, {
+                                    photosBefore: ans.photosBefore!.filter((_, j) => j !== i),
+                                  })}
+                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center leading-none shadow-sm"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 

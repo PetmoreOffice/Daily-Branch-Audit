@@ -164,9 +164,9 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
       </div>
 
       {/* Main Grid: Employee List & History Drawer */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="flex flex-col lg:flex-row gap-5">
         {/* List Table */}
-        <div className={`${selectedEmp ? "lg:col-span-7" : "lg:col-span-12"} bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden`}>
+        <div className={`flex-1 min-w-0 bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden`}>
           {filteredEmployees.length === 0 ? (
             <div className="p-12 flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
@@ -205,7 +205,9 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                       {e.nickname && <span className="text-audit-blue mr-1">({e.nickname})</span>} {e.firstName} {e.lastName}
                     </td>
                     <td className="p-3.5 text-slate-600">{e.role}</td>
-                    <td className="p-3.5 text-slate-700 font-medium">{e.currentBranch?.name || branchName(e.branchId)}</td>
+                    <td className="p-3.5 text-slate-700 font-medium truncate max-w-[180px]" title={e.currentBranch?.name || branchName(e.branchId)}>
+                      {e.currentBranch?.name || branchName(e.branchId)}
+                    </td>
                     <td className="p-3.5 text-center">
                       <button
                         onClick={(ev) => {
@@ -234,8 +236,10 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
 
         {/* Selected Employee Assignment History Details */}
         {selectedEmp && (
-          <div className="lg:col-span-5 bg-white rounded-xl border border-audit-hairline shadow-sm h-fit sticky top-6 overflow-hidden">
-              {/* Avatar Header */}
+          <div className="w-full lg:w-[40%] xl:w-[35%] shrink-0">
+            <div className="sticky top-6">
+              <div className="bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden">
+                {/* Avatar Header */}
               <div className="bg-gradient-to-br from-navy to-audit-blue p-5 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
                   <span className="text-white font-black text-xl">
@@ -363,9 +367,11 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   ))}
                 </div>
               </div>
+            </div>
           </div>
-          </div>
-        )}
+        </div>
+      </div>
+    )}
       </div>
 
       {/* Add Employee Modal */}

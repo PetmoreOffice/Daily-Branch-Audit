@@ -224,7 +224,7 @@ export default function DashboardOverview({
                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={10} />
                  <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={-10} />
                  <Tooltip
-                   cursor={{ fill: "#f1f5f9" }}
+                   cursor={{ fill: "rgba(37, 99, 235, 0.06)", rx: 4 }}
                    contentStyle={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", fontSize: "12px", color: "#0f172a", padding: "8px 12px" }}
                    itemStyle={{ color: "#0f172a", fontWeight: 600 }}
                  />
@@ -244,7 +244,7 @@ export default function DashboardOverview({
                  <XAxis type="number" domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={5} />
                  <YAxis type="category" dataKey="name" width={90} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={-10} />
                  <Tooltip
-                   cursor={{ fill: "#f1f5f9" }}
+                   cursor={{ fill: "rgba(37, 99, 235, 0.06)", rx: 4 }}
                    contentStyle={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", fontSize: "12px", color: "#0f172a", padding: "8px 12px" }}
                    itemStyle={{ color: "#0f172a", fontWeight: 600 }}
                  />
