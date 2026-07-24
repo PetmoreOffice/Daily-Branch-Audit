@@ -18,65 +18,104 @@ export const BRANCHES: Branch[] = [
   { id: "B04", code: "NKR-04", name: "สาขาปากช่อง", zone: ZONES[1], province: "นครราชสีมา", status: "เปิดใช้งาน" },
 ];
 
-export const ROLES = ["ผู้จัดการสาขา", "หัวหน้าสาขา", "พนักงาน PC", "แคชเชียร์"];
+export const ROLES = [
+  "ผู้จัดการสาขา",
+  "พนักงานขายร้านส่ง",
+  "หัวหน้าสาขา",
+  "พนักงานจัดเรียงสินค้า",
+  "PC ร้านส่ง",
+  "แคชเชียร์"
+];
 
-const FIRST_NAMES = ["สมชาย", "วิภา", "ศรุต", "เอกพล", "จิราพร", "ปวีณา", "ธนกร", "นภัสวรรณ", "อรรถพล", "กัญญาพัชร", "ณัฐวุฒิ", "พิมพ์ชนก", "สุริยา", "รัตนาภรณ์", "ชนาธิป"];
-const LAST_NAMES = ["ใจดี", "รักเรียน", "ศรีสุข", "แสงทอง", "บุญมี", "พงษ์ไพร", "วงศ์สกุล", "เจริญพร", "มั่งมี", "เกตุแก้ว"];
-const NICKNAMES = ["ชาย", "ภา", "รุต", "เอก", "พร", "ปอ", "กร", "วรรณ", "พล", "กานต์", "นัท", "พิมพ์", "ซัน", "รัตน์", "ทิป"];
+const INITIAL_EMPLOYEES_DATA: Omit<Employee, "zone">[] = [
+  // B01: สาขาหลังเดอะมอลโคราช
+  { id: "EMP-0001", code: "EMP-0001", firstName: "สมชาย", lastName: "ใจดี", nickname: "ชาย", role: "ผู้จัดการสาขา", branchId: "B01", email: "somchai.j@company.co.th", phone: "081-234-5678", assignments: [{ branchId: "B01", startDate: "2025-01-01", endDate: null }] },
+  { id: "EMP-0002", code: "EMP-0002", firstName: "วิภา", lastName: "ศรีสุข", nickname: "ภา", role: "หัวหน้าสาขา", branchId: "B01", email: "wipa.s@company.co.th", phone: "082-345-6789", assignments: [{ branchId: "B01", startDate: "2025-01-01", endDate: null }] },
+  { id: "EMP-0003", code: "EMP-0003", firstName: "ศรุต", lastName: "แสงทอง", nickname: "รุต", role: "พนักงานจัดเรียงสินค้า", branchId: "B01", email: "sarut.s@company.co.th", phone: "083-456-7890", assignments: [{ branchId: "B01", startDate: "2025-02-15", endDate: null }] },
+  { id: "EMP-0004", code: "EMP-0004", firstName: "เอกพล", lastName: "บุญมี", nickname: "เอก", role: "แคชเชียร์", branchId: "B01", email: "akapol.b@company.co.th", phone: "084-567-8901", assignments: [{ branchId: "B01", startDate: "2025-03-01", endDate: null }] },
+  { id: "EMP-0005", code: "EMP-0005", firstName: "จิราพร", lastName: "พงษ์ไพร", nickname: "พร", role: "พนักงานขายร้านส่ง", branchId: "B01", email: "jiraporn.p@company.co.th", phone: "085-678-9012", assignments: [{ branchId: "B01", startDate: "2025-04-10", endDate: null }] },
 
-function fmtDate(d: Date) { return d.toISOString().slice(0, 10); }
-function addMonths(d: Date, n: number) { return new Date(d.getFullYear(), d.getMonth() + n, d.getDate()); }
-export const TODAY = new Date(2026, 6, 22);
+  // B02: สาขาบ้านเกาะ
+  { id: "EMP-0006", code: "EMP-0006", firstName: "ปวีณา", lastName: "วงศ์สกุล", nickname: "ปอ", role: "ผู้จัดการสาขา", branchId: "B02", email: "paweena.w@company.co.th", phone: "086-789-0123", assignments: [{ branchId: "B02", startDate: "2025-01-01", endDate: null }] },
+  { id: "EMP-0007", code: "EMP-0007", firstName: "ธนกร", lastName: "เจริญพร", nickname: "กร", role: "หัวหน้าสาขา", branchId: "B02", email: "thanakorn.c@company.co.th", phone: "087-890-1234", assignments: [{ branchId: "B02", startDate: "2025-01-15", endDate: null }] },
+  { id: "EMP-0008", code: "EMP-0008", firstName: "นภัสวรรณ", lastName: "มั่งมี", nickname: "วรรณ", role: "แคชเชียร์", branchId: "B02", email: "napassawan.m@company.co.th", phone: "088-901-2345", assignments: [{ branchId: "B02", startDate: "2025-02-01", endDate: null }] },
+  { id: "EMP-0009", code: "EMP-0009", firstName: "อรรถพล", lastName: "เกตุแก้ว", nickname: "พล", role: "พนักงานจัดเรียงสินค้า", branchId: "B02", email: "atthapol.k@company.co.th", phone: "089-012-3456", assignments: [{ branchId: "B02", startDate: "2025-03-15", endDate: null }] },
 
-function buildAssignmentHistory(currentBranchId: string) {
-  const rotated = rng() < 0.4;
-  if (!rotated) {
-    const monthsAgo = 3 + Math.floor(rng() * 24);
-    return [{ branchId: currentBranchId, startDate: fmtDate(addMonths(TODAY, -monthsAgo)), endDate: null }];
-  }
-  let prevBranch: string;
-  do { prevBranch = BRANCHES[Math.floor(rng() * BRANCHES.length)].id; } while (prevBranch === currentBranchId);
-  const startedMonthsAgo = 14 + Math.floor(rng() * 16);
-  const movedMonthsAgo = 1 + Math.floor(rng() * 11);
-  const startDate = fmtDate(addMonths(TODAY, -startedMonthsAgo));
-  const moveDate = fmtDate(addMonths(TODAY, -movedMonthsAgo));
-  return [
-    { branchId: prevBranch, startDate, endDate: moveDate },
-    { branchId: currentBranchId, startDate: moveDate, endDate: null },
-  ];
+  // B03: สาขาหนองไผ่ล้อม
+  { id: "EMP-0010", code: "EMP-0010", firstName: "กัญญาพัชร", lastName: "ศรีสุข", nickname: "กานต์", role: "ผู้จัดการสาขา", branchId: "B03", email: "kanyapat.s@company.co.th", phone: "081-111-2222", assignments: [{ branchId: "B03", startDate: "2025-01-01", endDate: null }] },
+  { id: "EMP-0011", code: "EMP-0011", firstName: "ณัฐวุฒิ", lastName: "บุญมี", nickname: "นัท", role: "หัวหน้าสาขา", branchId: "B03", email: "nattawut.b@company.co.th", phone: "082-222-3333", assignments: [{ branchId: "B03", startDate: "2025-02-01", endDate: null }] },
+  { id: "EMP-0012", code: "EMP-0012", firstName: "พิมพ์ชนก", lastName: "แสงทอง", nickname: "พิมพ์", role: "แคชเชียร์", branchId: "B03", email: "pimchanok.s@company.co.th", phone: "083-333-4444", assignments: [{ branchId: "B03", startDate: "2025-03-01", endDate: null }] },
+  { id: "EMP-0013", code: "EMP-0013", firstName: "สุริยา", lastName: "พงษ์ไพร", nickname: "ซัน", role: "พนักงานจัดเรียงสินค้า", branchId: "B03", email: "suriya.p@company.co.th", phone: "084-444-5555", assignments: [{ branchId: "B03", startDate: "2025-04-01", endDate: null }] },
+
+  // B04: สาขาปากช่อง
+  { id: "EMP-0014", code: "EMP-0014", firstName: "รัตนาภรณ์", lastName: "เจริญพร", nickname: "รัตน์", role: "ผู้จัดการสาขา", branchId: "B04", email: "rattanaporn.c@company.co.th", phone: "085-555-6666", assignments: [{ branchId: "B04", startDate: "2025-01-01", endDate: null }] },
+  { id: "EMP-0015", code: "EMP-0015", firstName: "ชนาธิป", lastName: "วงศ์สกุล", nickname: "ทิป", role: "หัวหน้าสาขา", branchId: "B04", email: "chanathip.w@company.co.th", phone: "086-666-7777", assignments: [{ branchId: "B04", startDate: "2025-01-15", endDate: null }] },
+  { id: "EMP-0016", code: "EMP-0016", firstName: "ธนวัตร", lastName: "มีสุข", nickname: "วัตร", role: "พนักงานจัดเรียงสินค้า", branchId: "B04", email: "thanawat.m@company.co.th", phone: "087-777-8888", assignments: [{ branchId: "B04", startDate: "2025-02-01", endDate: null }] },
+  { id: "EMP-0017", code: "EMP-0017", firstName: "อนุชา", lastName: "ใจดี", nickname: "ชา", role: "แคชเชียร์", branchId: "B04", email: "anucha.j@company.co.th", phone: "088-888-9999", assignments: [{ branchId: "B04", startDate: "2025-03-01", endDate: null }] },
+];
+
+export const EMPLOYEES: Employee[] = INITIAL_EMPLOYEES_DATA.map(e => ({
+  ...e,
+  zone: BRANCHES.find(b => b.id === e.branchId)?.zone || ZONES[0]
+}));
+
+export function addMockEmployee(empData: any) {
+  const newEmp: Employee = {
+    id: empData.id || `EMP-${Date.now()}`,
+    code: empData.code || `EMP-${String(EMPLOYEES.length + 1).padStart(4, "0")}`,
+    firstName: empData.firstName,
+    lastName: empData.lastName,
+    nickname: empData.nickname || "",
+    role: empData.role,
+    branchId: empData.branchId,
+    zone: BRANCHES.find(b => b.id === empData.branchId)?.zone || ZONES[0],
+    email: empData.email || "",
+    phone: empData.phone || "",
+    assignments: empData.assignments || [{ branchId: empData.branchId, startDate: new Date().toISOString().slice(0, 10), endDate: null }]
+  };
+  EMPLOYEES.unshift(newEmp);
+  return newEmp;
 }
 
-function buildEmployees(): Employee[] {
-  const list: Employee[] = [];
-  let n = 1;
-  BRANCHES.forEach((b) => {
-    ROLES.forEach((role) => {
-      const count = role === "ผู้จัดการสาขา" ? 1 : role === "รองผู้จัดการ" ? 1 : 2;
-      for (let i = 0; i < count; i++) {
-        const fn = FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)];
-        const ln = LAST_NAMES[Math.floor(rng() * LAST_NAMES.length)];
-        const nick = NICKNAMES[Math.floor(rng() * NICKNAMES.length)];
-        const assignments = buildAssignmentHistory(b.id);
-        list.push({
-          id: `E${String(n).padStart(3, "0")}`,
-          code: `EMP-${String(n).padStart(4, "0")}`,
-          firstName: fn,
-          lastName: ln,
-          nickname: nick,
-          role,
-          branchId: b.id,
-          zone: b.zone,
-          email: `${fn}.${ln}@company.co.th`.toLowerCase(),
-          phone: `08${Math.floor(rng() * 90000000 + 10000000)}`,
-          assignments,
-        });
-        n++;
-      }
+export function syncEmployees(dbEmployees: any[]) {
+  if (!dbEmployees || dbEmployees.length === 0) return;
+  EMPLOYEES.length = 0;
+  dbEmployees.forEach((e) => {
+    // Attempt to map DB branch to Mock Branch ID using branch code
+    const mockBranch = e.currentBranch 
+      ? BRANCHES.find(b => b.code === e.currentBranch.code)
+      : undefined;
+    const mappedBranchId = mockBranch ? mockBranch.id : e.branchId;
+
+    EMPLOYEES.push({
+      id: e.id,
+      code: e.code,
+      firstName: e.firstName,
+      lastName: e.lastName,
+      nickname: e.nickname || "",
+      role: e.role,
+      branchId: mappedBranchId,
+      zone: e.zoneName || e.zone || mockBranch?.zone || ZONES[0],
+      email: e.email || "",
+      phone: e.phone || "",
+      assignments: e.assignments && e.assignments.length > 0
+        ? e.assignments.map((a: any) => {
+            const assignmentMockBranch = a.branch 
+              ? BRANCHES.find(b => b.code === a.branch.code)
+              : undefined;
+            return {
+              branchId: assignmentMockBranch ? assignmentMockBranch.id : a.branchId,
+              startDate: a.startDate,
+              endDate: a.endDate || null,
+            };
+          })
+        : [{ branchId: mappedBranchId, startDate: "2025-01-01", endDate: null }]
     });
   });
-  return list;
 }
-export let EMPLOYEES: Employee[] = buildEmployees();
+
+function fmtDate(d: Date) { return d.toISOString().slice(0, 10); }
+export const TODAY = new Date(2026, 6, 22);
 
 export function employeesAtBranchOnDate(branchId: string, dateStr?: string): Employee[] {
   if (!dateStr) return EMPLOYEES.filter((e) => e.branchId === branchId);

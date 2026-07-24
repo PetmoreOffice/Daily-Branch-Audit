@@ -7,11 +7,12 @@ import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 
 interface NewAuditWizardProps {
   onSubmit: (audit: Audit) => void;
+  auditorName?: string;
 }
 
-export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
+export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizardProps) {
   const [step, setStep] = useState<number>(1);
-  const [date, setDate] = useState<string>("2026-07-22");
+  const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [branchId, setBranchId] = useState<string>("");
 
   const [answers, setAnswers] = useState<Record<string, Partial<AuditItemResult>>>({});
@@ -59,11 +60,11 @@ export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
     });
 
     const newAudit: Audit = {
-      id: `A-NEW-${Date.now()}`,
+      id: `A-${Date.now()}`,
       date,
       branchId,
       templateId: TEMPLATE.id,
-      auditor: "คุณอารีย์ ตรวจงาน (Area Manager)",
+      auditor: auditorName || "ผู้ตรวจประเมิน",
       gps: "ไม่ระบุ",
       items,
     };
@@ -78,13 +79,32 @@ export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
 
   if (step === 1) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-extrabold text-navy">เริ่มการตรวจประเมินสาขาใหม่</h1>
-          <p className="text-xs text-audit-slate">ระบุวันที่ สาขา และพิกัดสถานที่ก่อนทำแบบประเมิน</p>
+          <h1 className="text-2xl font-extrabold text-navy tracking-tight">เริ่มการตรวจประเมินสาขาใหม่</h1>
+          <p className="text-xs font-medium text-audit-slate">ระบุวันที่ สาขา และพิกัดสถานที่ก่อนทำแบบประเมิน</p>
         </div>
 
-        <div className="gridgeist-card p-6 space-y-4">
+        {/* Step Progress Indicator */}
+        <div className="flex items-center gap-0 mb-2">
+          <div className="flex items-center gap-2 flex-1">
+            <div className="w-8 h-8 rounded-full bg-audit-blue flex items-center justify-center text-white text-xs font-black shrink-0">1</div>
+            <div className="flex-1">
+              <div className="text-xs font-bold text-navy">ข้อมูลหลัก</div>
+              <div className="text-[10px] text-audit-slate">วันที่ & สาขา</div>
+            </div>
+          </div>
+          <div className="h-0.5 w-12 bg-audit-hairline mx-2 rounded-full" />
+          <div className="flex items-center gap-2 flex-1 opacity-40">
+            <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-white text-xs font-black shrink-0">2</div>
+            <div className="flex-1">
+              <div className="text-xs font-bold text-slate-500">แบบประเมิน</div>
+              <div className="text-[10px] text-slate-400">ให้คะแนนรายหัวข้อ</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="gridgeist-card p-6 space-y-4 max-w-3xl">
           <div>
             <label className="block text-xs font-bold text-navy mb-1">วันที่ทำการตรวจประเมิน</label>
             <input
@@ -105,7 +125,7 @@ export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
               <option value="">-- เลือกสาขา --</option>
               {BRANCHES.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.code} · {b.name} ({b.zone})
+                  {b.code} · {b.name}
                 </option>
               ))}
             </select>
@@ -128,7 +148,7 @@ export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Step Header */}
       <div className="flex items-center justify-between bg-navy text-white p-4 rounded-xl shadow-md">
         <div>
@@ -213,6 +233,7 @@ export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
                           พนักงานที่รับผิดชอบ (ค้นหาชื่อ หรือพิมพ์เพิ่มได้)
                         </label>
                         <EmployeeSearch
+                          branchId={branchId}
                           selectedIds={ans.responsibleIds || []}
                           onChange={(ids) => updateItem(item.id, { responsibleIds: ids })}
                         />
@@ -277,14 +298,14 @@ export default function NewAuditWizard({ onSubmit }: NewAuditWizardProps) {
   );
 }
 
-function EmployeeSearch({ selectedIds, onChange }: { selectedIds: string[], onChange: (ids: string[]) => void }) {
+function EmployeeSearch({ selectedIds, onChange, branchId }: { selectedIds: string[], onChange: (ids: string[]) => void, branchId?: string }) {
   const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Map IDs back to objects/labels
   const getLabel = (id: string) => {
     const emp = EMPLOYEES.find((e) => e.id === id);
     if (emp) return `${emp.firstName} ${emp.lastName} (${emp.role})`;
-    return id; // Free text fallback
+    return id;
   };
 
   const handleAdd = (val: string) => {
@@ -293,60 +314,106 @@ function EmployeeSearch({ selectedIds, onChange }: { selectedIds: string[], onCh
       onChange([...selectedIds, val]);
     }
     setQuery("");
+    setIsOpen(false);
   };
 
   const handleRemove = (id: string) => {
     onChange(selectedIds.filter((x) => x !== id));
   };
 
-  // Filter existing employees based on query
-  const searchResults = query.length > 0 
-    ? EMPLOYEES.filter(e => 
-        (e.firstName + " " + e.lastName + " " + e.role).toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 5) // Limit to 5 results
-    : [];
+  const isWildcard = query.trim() === "*";
+
+  // Candidates: Filter by query, wildcard *, or show current branch staff first
+  const candidates = isWildcard
+    ? EMPLOYEES
+    : query.trim().length > 0
+    ? EMPLOYEES.filter((e) =>
+        `${e.firstName} ${e.lastName} ${e.nickname || ""} ${e.role} ${e.code}`
+          .toLowerCase()
+          .includes(query.toLowerCase())
+      )
+    : branchId
+    ? EMPLOYEES.filter((e) => e.branchId === branchId)
+    : EMPLOYEES;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
       {/* Search Input */}
       <div className="relative">
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              handleAdd(query);
+              if (query.trim() !== "*") {
+                handleAdd(query);
+              }
             }
           }}
-          placeholder="พิมพ์ชื่อ, นามสกุล, ตำแหน่ง หรือพิมพ์อิสระแล้วกด Enter"
+          placeholder="คลิกเลือกชื่อพนักงานประจำสาขา, พิมพ์ * เพื่อดูพนักงานทั้งหมด หรือพิมพ์ค้นหาแล้วกด Enter"
           className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-xs text-navy focus:outline-none focus:ring-1 focus:ring-audit-blue"
         />
-        {query && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-audit-hairline shadow-lg rounded-lg overflow-hidden max-h-40 overflow-y-auto">
-            {searchResults.length > 0 ? (
-              searchResults.map(emp => (
+
+        {/* Dropdown Suggestions */}
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+            <div className="absolute z-20 w-full mt-1 bg-white border border-audit-hairline shadow-xl rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+              <div className="px-3 py-1.5 bg-slate-50 border-b border-audit-hairline text-[10px] font-bold text-slate-400 uppercase flex justify-between items-center">
+                <span>
+                  {isWildcard
+                    ? `รายชื่อพนักงานทั้งหมดในระบบ (${EMPLOYEES.length} คน)`
+                    : query
+                    ? `ผลการค้นหาพนักงาน (${candidates.length} คน)`
+                    : "พนักงานประจำสาขานี้ (พิมพ์ * เพื่อดูทั้งหมด)"}
+                </span>
+              </div>
+              {candidates.length > 0 ? (
+                candidates.map((emp) => {
+                  const isSelected = selectedIds.includes(emp.id);
+                  const bName = BRANCHES.find((b) => b.id === emp.branchId)?.name || emp.branchId;
+                  return (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onClick={() => handleAdd(emp.id)}
+                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-audit-tint/50 border-b border-slate-100 last:border-0 transition ${
+                        isSelected ? "bg-audit-tint font-bold text-audit-blue" : "text-navy"
+                      }`}
+                    >
+                      <div>
+                        <span className="font-bold">{emp.firstName} {emp.lastName}</span>
+                        {emp.nickname && <span className="text-slate-400 ml-1">({emp.nickname})</span>}
+                        <span className="text-slate-500 text-[11px] ml-2">· {emp.role}</span>
+                        {(isWildcard || !branchId || emp.branchId !== branchId) && (
+                          <span className="text-[10px] font-semibold text-audit-blue bg-audit-tint px-1.5 py-0.5 rounded ml-2">
+                            {bName}
+                          </span>
+                        )}
+                      </div>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-audit-blue shrink-0" />}
+                    </button>
+                  );
+                })
+              ) : null}
+
+              {query.trim() && !isWildcard && (
                 <button
-                  key={emp.id}
                   type="button"
-                  onClick={() => handleAdd(emp.id)}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 border-b border-audit-hairline last:border-0"
+                  onClick={() => handleAdd(query)}
+                  className="w-full text-left px-3 py-2.5 text-xs hover:bg-audit-tint text-audit-blue font-bold flex items-center gap-1 border-t border-slate-100"
                 >
-                  <span className="font-bold text-audit-blue">{emp.firstName} {emp.lastName}</span>
-                  <span className="text-audit-slate ml-2">({emp.role})</span>
+                  + เพิ่ม "{query}" เป็นข้อมูลอิสระ (Free Text)
                 </button>
-              ))
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleAdd(query)}
-                className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-audit-blue font-semibold"
-              >
-                + เพิ่ม "{query}" เป็นข้อมูลอิสระ (Free Text)
-              </button>
-            )}
-          </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 

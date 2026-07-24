@@ -6,10 +6,10 @@
 
 :root {
   --font-prompt: 'Prompt', 'Plus Jakarta Sans', sans-serif;
-  --bg-audit: #F6F7F9;
+  --bg-audit: #F8FAFC;
   --navy-audit: #12294B;
   --blue-audit: #2C5AA0;
-  --line-audit: #E3E7ED;
+  --line-audit: #E2E8F0;
 }
 
 body {
@@ -21,40 +21,74 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Gridgeist Structural Hairlines & Cards */
+/* Gridgeist Structural Cards - Modern Clean Mode */
 .gridgeist-card {
   background: #ffffff;
   border: 1px solid var(--line-audit);
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(18, 41, 75, 0.04), 0 4px 12px rgba(18, 41, 75, 0.02);
-  transition: all 0.2s ease-in-out;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
+  transition: all 0.15s ease-in-out;
 }
 
 .gridgeist-card:hover {
   border-color: #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
-.gridgeist-grid-bg {
-  background-image: linear-gradient(to right, rgba(227, 231, 237, 0.4) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(227, 231, 237, 0.4) 1px, transparent 1px);
-  background-size: 24px 24px;
+/* Dark Mode System Overrides */
+.dark {
+  --bg-audit: #0F172A;
+  --navy-audit: #F8FAFC;
+  --blue-audit: #3B82F6;
+  --line-audit: #334155;
 }
 
-/* Scrollbar Customization */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.dark body {
+  background-color: #0F172A;
+  color: #F8FAFC;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
+.dark .bg-white {
+  background-color: #1E293B !important;
+  color: #F8FAFC;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+.dark .bg-slate-50 {
+  background-color: #0F172A !important;
+  color: #CBD5E1;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.dark .bg-slate-100\/70,
+.dark .bg-slate-100 {
+  background-color: #0F172A !important;
+  color: #94A3B8;
+}
+
+.dark .text-navy {
+  color: #F8FAFC !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-600,
+.dark .text-audit-slate {
+  color: #94A3B8 !important;
+}
+
+.dark .border-audit-hairline,
+.dark .border-slate-100,
+.dark .divide-audit-hairline > * + * {
+  border-color: #334155 !important;
+}
+
+.dark .gridgeist-card {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+}
+
+.dark input, 
+.dark select {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
 }

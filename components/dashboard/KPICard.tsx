@@ -13,18 +13,20 @@ interface KPICardProps {
 
 export default function KPICard({ icon: Icon, label, value, sub, accent }: KPICardProps) {
   return (
-    <div className="gridgeist-card p-4 flex-1 min-w-[170px]">
-      <div className="flex items-center gap-2 mb-2.5">
+    <div className="p-4 bg-white rounded-xl border border-audit-hairline shadow-sm hover:shadow-md transition flex flex-col justify-between">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-xs font-semibold text-slate-500">{label}</span>
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
-          style={{ backgroundColor: accent || "#2C5AA0" }}
+          className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-50"
+          style={{ color: accent || "#2C5AA0" }}
         >
           <Icon className="w-4 h-4" />
         </div>
-        <span className="text-xs font-semibold text-audit-slate">{label}</span>
       </div>
-      <div className="text-2xl font-extrabold text-navy leading-none tracking-tight">{value}</div>
-      {sub && <div className="text-[11px] text-audit-slate mt-1.5 font-medium">{sub}</div>}
+      <div>
+        <div className="text-xl font-bold text-navy tracking-tight">{value}</div>
+        {sub && <div className="text-[11px] text-slate-400 mt-0.5 font-medium">{sub}</div>}
+      </div>
     </div>
   );
 }

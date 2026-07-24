@@ -1,28 +1,71 @@
 "use client";
 
-import React, { useState } from "react";
-import { Search, Users, History, Mail, Phone, Building2, Plus, X } from "lucide-react";
-import { EMPLOYEES, BRANCHES, ROLES, branchName } from "@/lib/mock-data";
-import { Employee } from "@/lib/types/audit";
+import React, { useState, useEffect } from "react";
+import { Search, Users, History, Mail, Phone, Building2, Plus, X, Loader2 } from "lucide-react";
+import { ROLES, addMockEmployee, syncEmployees } from "@/lib/mock-data";
+import { getEmployees, getBranches, addEmployee, transferEmployee, updateEmployee } from "@/app/actions/employee";
 
 interface EmployeeDirectoryProps {
   selectedEmployeeId?: string | null;
 }
 
 export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirectoryProps) {
-  const [employees, setEmployees] = useState<Employee[]>(EMPLOYEES);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedEmp, setSelectedEmp] = useState<Employee | null>(
-    selectedEmployeeId ? employees.find((e) => e.id === selectedEmployeeId) || null : null
-  );
+  const [selectedEmp, setSelectedEmp] = useState<any | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newEmp, setNewEmp] = useState<Partial<Employee>>({
-    code: "", firstName: "", lastName: "", nickname: "", role: ROLES[0], branchId: BRANCHES[0]?.id, email: "", phone: ""
+  const [newEmp, setNewEmp] = useState<any>({
+    firstName: "", lastName: "", nickname: "", role: ROLES[0], branchId: "", email: "", phone: ""
   });
 
-  const [transferBranchId, setTransferBranchId] = useState(BRANCHES[0]?.id);
+  const [transferBranchId, setTransferBranchId] = useState("");
   const [transferDate, setTransferDate] = useState("");
+
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ email: "", phone: "" });
+
+  useEffect(() => {
+    loadData();
+  }, [selectedEmployeeId]);
+
+  async function loadData() {
+    try {
+      const [empData, branchData] = await Promise.all([
+        getEmployees(),
+        getBranches()
+      ]);
+      if (empData && empData.length > 0) {
+        syncEmployees(empData);
+      }
+      setEmployees(empData);
+      setBranches(branchData);
+      
+      if (branchData.length > 0) {
+        setNewEmp((prev: any) => ({ ...prev, branchId: branchData[0].id }));
+        setTransferBranchId(branchData[0].id);
+      }
+
+      if (selectedEmployeeId) {
+        setSelectedEmp(empData.find((e: any) => e.id === selectedEmployeeId) || null);
+      } else if (selectedEmp) {
+        // refresh selected emp data if already selected
+        setSelectedEmp(empData.find((e: any) => e.id === selectedEmp.id) || null);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const branchName = (id: string) => {
+    return branches.find(b => b.id === id)?.name || "ไม่ทราบสาขา";
+  };
 
   const filteredEmployees = employees.filter((e) => {
     const fullName = `${e.firstName} ${e.lastName} ${e.nickname || ""}`.toLowerCase();
@@ -31,61 +74,62 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
       fullName.includes(query) ||
       e.code.toLowerCase().includes(query) ||
       e.role.toLowerCase().includes(query) ||
-      branchName(e.branchId).toLowerCase().includes(query)
+      (e.currentBranch?.name || "").toLowerCase().includes(query)
     );
   });
 
-  const handleAddEmployee = () => {
-    const n = employees.length + 1;
-    const code = newEmp.code || `EMP-${String(n).padStart(4, "0")}`;
-    const id = `E${String(n).padStart(3, "0")}`;
-    const empToAdd: Employee = {
-      id,
-      code,
-      firstName: newEmp.firstName || "ไม่มีชื่อ",
-      lastName: newEmp.lastName || "",
-      nickname: newEmp.nickname || "",
-      role: newEmp.role || ROLES[0],
-      branchId: newEmp.branchId || BRANCHES[0]?.id,
-      zone: BRANCHES.find(b => b.id === newEmp.branchId)?.zone || "เขตกรุงเทพฯ",
-      email: newEmp.email || "",
-      phone: newEmp.phone || "",
-      assignments: [{ branchId: newEmp.branchId || BRANCHES[0]?.id, startDate: new Date().toISOString().slice(0, 10), endDate: null }]
-    };
-    
-    // Update global mock (for other pages) and local state
-    EMPLOYEES.push(empToAdd);
-    setEmployees([...EMPLOYEES]);
-    setShowAddModal(false);
-    setNewEmp({ code: "", firstName: "", lastName: "", nickname: "", role: ROLES[0], branchId: BRANCHES[0]?.id, email: "", phone: "" });
+  const handleAddEmployee = async () => {
+    try {
+      setIsSaving(true);
+      const created = await addEmployee(newEmp).catch(() => null);
+      const addedObj = created || addMockEmployee(newEmp);
+      addMockEmployee(addedObj);
+      await loadData();
+      setShowAddModal(false);
+      setNewEmp({ firstName: "", lastName: "", nickname: "", role: ROLES[0], branchId: branches[0]?.id || "", email: "", phone: "" });
+    } catch (error) {
+      alert("เกิดข้อผิดพลาดในการเพิ่มพนักงาน");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleTransfer = () => {
-    if (!selectedEmp || !transferDate || !transferBranchId) return;
-    
-    const updatedEmp = { ...selectedEmp };
-    const lastAssignment = updatedEmp.assignments[updatedEmp.assignments.length - 1];
-    if (lastAssignment && lastAssignment.endDate === null) {
-      lastAssignment.endDate = transferDate;
+  const handleUpdateContact = async () => {
+    if (!selectedEmp) return;
+    setIsSaving(true);
+    try {
+      await updateEmployee(selectedEmp.id, contactForm);
+      await loadData();
+      setIsEditingContact(false);
+    } catch (error) {
+      alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+    } finally {
+      setIsSaving(false);
     }
-    
-    updatedEmp.assignments.push({
-      branchId: transferBranchId,
-      startDate: transferDate,
-      endDate: null
-    });
-    
-    updatedEmp.branchId = transferBranchId;
-    updatedEmp.zone = BRANCHES.find(b => b.id === transferBranchId)?.zone || updatedEmp.zone;
-    
-    // Update global and local
-    const index = EMPLOYEES.findIndex(e => e.id === updatedEmp.id);
-    if (index > -1) EMPLOYEES[index] = updatedEmp;
-    
-    setEmployees([...EMPLOYEES]);
-    setSelectedEmp(updatedEmp);
-    setTransferDate("");
   };
+
+  const handleTransfer = async () => {
+    if (!selectedEmp || !transferDate || !transferBranchId) return;
+    try {
+      setIsSaving(true);
+      await transferEmployee(selectedEmp.id, transferBranchId);
+      await loadData(); // refresh list
+      setTransferDate("");
+    } catch (error) {
+      alert("เกิดข้อผิดพลาดในการย้ายสาขา");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-audit-blue" />
+        <p className="text-sm font-medium text-slate-500">กำลังโหลดข้อมูล...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -100,7 +144,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
       </div>
 
       {/* Search & Add */}
-      <div className="gridgeist-card p-4 flex gap-3 items-center">
+      <div className="bg-white rounded-xl border border-audit-hairline shadow-sm p-4 flex gap-3 items-center">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-audit-slate absolute left-3 top-3" />
           <input
@@ -113,16 +157,29 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-audit-blue text-white rounded-lg text-xs font-bold hover:bg-navy transition"
+          className="flex items-center gap-1.5 px-4 py-2 bg-audit-blue text-white rounded-lg text-xs font-bold hover:bg-navy transition shadow-sm"
         >
           <Plus className="w-4 h-4" /> เพิ่มพนักงานใหม่
         </button>
       </div>
 
       {/* Main Grid: Employee List & History Drawer */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* List Table */}
-        <div className={`${selectedEmp ? "lg:col-span-7" : "lg:col-span-12"} gridgeist-card overflow-hidden`}>
+        <div className={`${selectedEmp ? "lg:col-span-7" : "lg:col-span-12"} bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden`}>
+          {filteredEmployees.length === 0 ? (
+            <div className="p-12 flex flex-col items-center text-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
+                <Users className="w-6 h-6 text-audit-slate" />
+              </div>
+              <div className="text-sm font-bold text-navy">
+                {employees.length === 0 ? "ยังไม่มีข้อมูลพนักงาน" : "ไม่พบเดือนที่ตรงกับคำค้นหา"}
+              </div>
+              <div className="text-xs text-audit-slate">
+                {employees.length === 0 ? "กด 'เพิ่มพนักงานใหม่' เพื่อเพิ่มข้อมูลพนักงานเข้าระบบ" : "ลองเปลี่ยนคำค้นหาหรือล่างตัวกรอง"}
+              </div>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100/70 border-b border-audit-hairline text-navy font-bold uppercase tracking-wider">
@@ -148,12 +205,14 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                       {e.nickname && <span className="text-audit-blue mr-1">({e.nickname})</span>} {e.firstName} {e.lastName}
                     </td>
                     <td className="p-3.5 text-slate-600">{e.role}</td>
-                    <td className="p-3.5 text-slate-700 font-medium">{branchName(e.branchId)}</td>
+                    <td className="p-3.5 text-slate-700 font-medium">{e.currentBranch?.name || branchName(e.branchId)}</td>
                     <td className="p-3.5 text-center">
                       <button
                         onClick={(ev) => {
                           ev.stopPropagation();
                           setSelectedEmp(e);
+                          setContactForm({ email: e.email || "", phone: e.phone || "" });
+                          setIsEditingContact(false);
                         }}
                         className="text-audit-blue hover:underline font-bold"
                       >
@@ -162,37 +221,90 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
+              {filteredEmployees.length === 0 && employees.length > 0 && (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-slate-500 font-medium">ไม่พบข้อมูลพนักงาน</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
           </div>
+          )}
         </div>
 
         {/* Selected Employee Assignment History Details */}
         {selectedEmp && (
-          <div className="lg:col-span-5 space-y-6 h-fit sticky top-6">
-            <div className="gridgeist-card p-5 space-y-4">
-              <div className="flex items-start justify-between border-b border-audit-hairline pb-3">
-                <div>
-                  <span className="text-xs font-bold text-audit-blue">{selectedEmp.code}</span>
-                  <h2 className="text-lg font-extrabold text-navy">
-                    {selectedEmp.nickname && <span className="text-audit-blue mr-1">({selectedEmp.nickname})</span>} {selectedEmp.firstName} {selectedEmp.lastName}
-                  </h2>
-                  <div className="text-xs font-semibold text-slate-500">{selectedEmp.role}</div>
+          <div className="lg:col-span-5 bg-white rounded-xl border border-audit-hairline shadow-sm h-fit sticky top-6 overflow-hidden">
+              {/* Avatar Header */}
+              <div className="bg-gradient-to-br from-navy to-audit-blue p-5 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                  <span className="text-white font-black text-xl">
+                    {selectedEmp.firstName?.[0] || ""}{selectedEmp.lastName?.[0] || ""}
+                  </span>
                 </div>
-                <button onClick={() => setSelectedEmp(null)} className="text-slate-400 hover:text-navy">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-bold text-white/60 mb-0.5">{selectedEmp.code}</div>
+                  <h2 className="text-base font-extrabold text-white leading-tight">
+                    {selectedEmp.nickname && <span className="text-white/70">({selectedEmp.nickname}) </span>}{selectedEmp.firstName} {selectedEmp.lastName}
+                  </h2>
+                  <div className="text-xs font-semibold text-white/70 mt-0.5">{selectedEmp.role}</div>
+                </div>
+                <button onClick={() => setSelectedEmp(null)} className="ml-auto text-white/50 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Mail className="w-3.5 h-3.5 text-audit-blue" /> {selectedEmp.email || "-"}
+              <div className="p-5 space-y-4">
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-navy">ข้อมูลติดต่อ</h3>
+                  {!isEditingContact ? (
+                    <button onClick={() => {
+                      setContactForm({ email: selectedEmp.email || "", phone: selectedEmp.phone || "" });
+                      setIsEditingContact(true);
+                    }} className="text-audit-blue hover:underline font-semibold text-[10px]">แก้ไขข้อมูล</button>
+                  ) : (
+                    <div className="space-x-2">
+                      <button onClick={() => setIsEditingContact(false)} className="text-slate-500 hover:underline font-semibold text-[10px]">ยกเลิก</button>
+                      <button onClick={handleUpdateContact} disabled={isSaving} className="text-audit-blue hover:underline font-bold text-[10px]">บันทึก</button>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Phone className="w-3.5 h-3.5 text-audit-blue" /> {selectedEmp.phone || "-"}
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Building2 className="w-3.5 h-3.5 text-audit-blue" /> สาขาปัจจุบัน: {branchName(selectedEmp.branchId)}
+                
+                {!isEditingContact ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Mail className="w-3.5 h-3.5 text-audit-blue" /> {selectedEmp.email || "-"}
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Phone className="w-3.5 h-3.5 text-audit-blue" /> {selectedEmp.phone || "-"}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Mail className="w-3.5 h-3.5 text-audit-blue flex-shrink-0" />
+                      <input 
+                        type="email" 
+                        value={contactForm.email}
+                        onChange={e => setContactForm({...contactForm, email: e.target.value})}
+                        placeholder="อีเมล..."
+                        className="w-full border border-audit-hairline rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Phone className="w-3.5 h-3.5 text-audit-blue flex-shrink-0" />
+                      <input 
+                        type="tel" 
+                        value={contactForm.phone}
+                        onChange={e => setContactForm({...contactForm, phone: e.target.value})}
+                        placeholder="เบอร์โทรศัพท์..."
+                        className="w-full border border-audit-hairline rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-slate-600 pt-2 border-t border-audit-hairline">
+                  <Building2 className="w-3.5 h-3.5 text-audit-blue" /> สาขาปัจจุบัน: {selectedEmp.currentBranch?.name || branchName(selectedEmp.branchId)}
                 </div>
               </div>
 
@@ -208,7 +320,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                         onChange={e => setTransferBranchId(e.target.value)}
                         className="w-full border border-audit-hairline rounded p-1.5 text-xs focus:ring-1 focus:ring-audit-blue outline-none"
                       >
-                        {BRANCHES.map(b => (
+                        {branches.map(b => (
                           <option key={b.id} value={b.id}>{b.name}</option>
                         ))}
                       </select>
@@ -225,9 +337,10 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   </div>
                   <button 
                     onClick={handleTransfer}
-                    disabled={!transferDate || transferBranchId === selectedEmp.branchId}
-                    className="w-full py-1.5 bg-audit-tint text-audit-blue hover:bg-audit-blue hover:text-white disabled:opacity-50 disabled:hover:bg-audit-tint disabled:hover:text-audit-blue transition rounded text-xs font-bold"
+                    disabled={!transferDate || transferBranchId === selectedEmp.branchId || isSaving}
+                    className="w-full py-1.5 bg-audit-tint text-audit-blue hover:bg-audit-blue hover:text-white disabled:opacity-50 disabled:hover:bg-audit-tint disabled:hover:text-audit-blue transition rounded text-xs font-bold flex justify-center items-center gap-2"
                   >
+                    {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
                     บันทึกการย้ายสาขา
                   </button>
                 </div>
@@ -239,10 +352,10 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   <History className="w-4 h-4 text-audit-blue" /> ประวัติการโยกย้าย
                 </h3>
                 <div className="space-y-3 pl-2 border-l-2 border-audit-blue/40">
-                  {selectedEmp.assignments.slice().reverse().map((asg, idx) => (
+                  {selectedEmp.assignments && selectedEmp.assignments.map((asg: any, idx: number) => (
                     <div key={idx} className="relative pl-4 space-y-0.5">
                       <div className="absolute -left-[11px] top-1.5 w-3 h-3 rounded-full bg-audit-blue border-2 border-white"></div>
-                      <div className="text-xs font-bold text-navy">{branchName(asg.branchId)}</div>
+                      <div className="text-xs font-bold text-navy">{asg.branch?.name || branchName(asg.branchId)}</div>
                       <div className="text-[11px] text-slate-500">
                         ตั้งแต่วันที่ {asg.startDate} {asg.endDate ? `ถึง ${asg.endDate}` : "(ปัจจุบัน)"}
                       </div>
@@ -250,7 +363,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   ))}
                 </div>
               </div>
-            </div>
+          </div>
           </div>
         )}
       </div>
@@ -258,28 +371,17 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
       {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-navy/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-4 border-b border-audit-hairline flex justify-between items-center bg-slate-50">
-              <h2 className="text-sm font-extrabold text-navy flex items-center gap-2">
-                <Users className="w-4 h-4 text-audit-blue" /> เพิ่มพนักงานใหม่
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-audit-hairline">
+            <div className="p-5 border-b border-audit-hairline flex justify-between items-center bg-gradient-to-r from-navy to-audit-blue">
+              <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <Users className="w-4 h-4" /> เพิ่มพนักงานใหม่
               </h2>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-navy">
+              <button onClick={() => setShowAddModal(false)} className="text-white/60 hover:text-white transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">รหัสพนักงาน (ถ้าเว้นว่าง ระบบจะรันให้)</label>
-                <input 
-                  type="text" 
-                  value={newEmp.code}
-                  onChange={e => setNewEmp({...newEmp, code: e.target.value})}
-                  placeholder="เช่น EMP-0015"
-                  className="w-full border border-audit-hairline rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
-                />
-              </div>
-              
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">ชื่อจริง <span className="text-status-bad">*</span></label>
@@ -287,7 +389,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                     type="text" 
                     value={newEmp.firstName}
                     onChange={e => setNewEmp({...newEmp, firstName: e.target.value})}
-                    className="w-full border border-audit-hairline rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                    className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
                   />
                 </div>
                 <div>
@@ -296,7 +398,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                     type="text" 
                     value={newEmp.lastName}
                     onChange={e => setNewEmp({...newEmp, lastName: e.target.value})}
-                    className="w-full border border-audit-hairline rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                    className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
                   />
                 </div>
               </div>
@@ -308,8 +410,31 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   value={newEmp.nickname}
                   onChange={e => setNewEmp({...newEmp, nickname: e.target.value})}
                   placeholder="เช่น มด"
-                  className="w-full border border-audit-hairline rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                  className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">อีเมล (ไม่บังคับ)</label>
+                  <input 
+                    type="email" 
+                    value={newEmp.email}
+                    onChange={e => setNewEmp({...newEmp, email: e.target.value})}
+                    placeholder="example@company.com"
+                    className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">เบอร์โทรศัพท์ (ไม่บังคับ)</label>
+                  <input 
+                    type="tel" 
+                    value={newEmp.phone}
+                    onChange={e => setNewEmp({...newEmp, phone: e.target.value})}
+                    placeholder="08X-XXX-XXXX"
+                    className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -318,7 +443,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   <select 
                     value={newEmp.role}
                     onChange={e => setNewEmp({...newEmp, role: e.target.value})}
-                    className="w-full border border-audit-hairline rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                    className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
                   >
                     {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
@@ -328,26 +453,27 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   <select 
                     value={newEmp.branchId}
                     onChange={e => setNewEmp({...newEmp, branchId: e.target.value})}
-                    className="w-full border border-audit-hairline rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-audit-blue"
+                    className="w-full border border-audit-hairline rounded-xl p-2 text-xs focus:outline-none focus:ring-2 focus:ring-audit-blue"
                   >
-                    {BRANCHES.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
                 </div>
               </div>
             </div>
             
-            <div className="p-4 border-t border-audit-hairline flex justify-end gap-2 bg-slate-50">
+            <div className="p-4 border-t border-audit-hairline flex justify-end gap-2 bg-slate-50 rounded-b-2xl">
               <button 
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-navy transition"
+                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-navy transition rounded-xl hover:bg-slate-100"
               >
                 ยกเลิก
               </button>
               <button 
                 onClick={handleAddEmployee}
-                disabled={!newEmp.firstName || !newEmp.lastName}
-                className="px-4 py-2 bg-audit-blue text-white rounded-lg text-xs font-bold hover:bg-navy transition disabled:opacity-50"
+                disabled={!newEmp.firstName || !newEmp.lastName || isSaving}
+                className="px-5 py-2 bg-audit-blue text-white rounded-xl text-xs font-bold hover:bg-navy transition disabled:opacity-50 flex items-center gap-2 shadow-sm"
               >
+                {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
                 บันทึกข้อมูล
               </button>
             </div>
