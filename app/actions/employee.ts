@@ -157,18 +157,21 @@ export async function transferEmployee(employeeId: string, newBranchId: string) 
   }
 }
 
-// 5. Update employee details (e.g. adding email/phone later)
+// 5. Update employee details (e.g. adding email/phone/role later)
 export async function updateEmployee(employeeId: string, data: {
   email?: string;
   phone?: string;
+  role?: string;
 }) {
   try {
+    const updateData: any = {};
+    if (data.email !== undefined) updateData.email = data.email || null;
+    if (data.phone !== undefined) updateData.phone = data.phone || null;
+    if (data.role !== undefined) updateData.role = data.role;
+
     const updatedEmployee = await prisma.employee.update({
       where: { id: employeeId },
-      data: {
-        email: data.email || null,
-        phone: data.phone || null,
-      },
+      data: updateData,
     });
 
     revalidatePath("/");

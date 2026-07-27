@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, CalendarDays, Filter, Eye, ChevronRight, X, UserCheck, ClipboardX, BarChart2 } from "lucide-react";
+import { Search, CalendarDays, Filter, Eye, ChevronRight, X, UserCheck, ClipboardX, BarChart2, Camera, FileText } from "lucide-react";
 import { Audit } from "@/lib/types/audit";
 import { branchName, itemName, employeeName, avgScore, statusFromScore, ALL_ITEMS } from "@/lib/mock-data";
 
@@ -224,12 +224,38 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                       />
                     </div>
                     {item.note && (
-                      <div className="text-xs text-status-bad bg-status-badBg px-3 py-1.5 rounded-lg font-medium border border-status-bad/20">
-                        ⚠ {item.note}
+                      <div className="text-xs text-navy bg-white p-2.5 rounded-lg border border-audit-hairline flex items-start gap-2 shadow-xs">
+                        <FileText className="w-3.5 h-3.5 text-audit-blue shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-navy">หมายเหตุ / รายละเอียดอ้างอิง:</span>{" "}
+                          <span className="text-slate-700">{item.note}</span>
+                        </div>
+                      </div>
+                    )}
+                    {((item.photosBefore && item.photosBefore.length > 0) || (item.photosAfter && item.photosAfter.length > 0)) && (
+                      <div className="space-y-1 pt-1">
+                        <div className="text-[11px] font-bold text-navy flex items-center gap-1">
+                          <Camera className="w-3.5 h-3.5 text-audit-blue" />
+                          รูปภาพแนบประกอบ ({(item.photosBefore?.length || 0) + (item.photosAfter?.length || 0)} ภาพ):
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-0.5">
+                          {item.photosBefore?.map((url, pIdx) => (
+                            <a key={`b-${pIdx}`} href={url} target="_blank" rel="noreferrer" className="relative group shrink-0">
+                              <img src={url} alt={`photo-${pIdx}`} className="w-16 h-16 object-cover rounded-lg border border-audit-hairline shadow-xs group-hover:opacity-90 transition" />
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 text-white text-[10px] font-bold rounded-lg transition">ขยาย</span>
+                            </a>
+                          ))}
+                          {item.photosAfter?.map((url, pIdx) => (
+                            <a key={`a-${pIdx}`} href={url} target="_blank" rel="noreferrer" className="relative group shrink-0">
+                              <img src={url} alt={`photo-after-${pIdx}`} className="w-16 h-16 object-cover rounded-lg border border-audit-hairline shadow-xs group-hover:opacity-90 transition" />
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 text-white text-[10px] font-bold rounded-lg transition">ขยาย</span>
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {item.responsibleIds.length > 0 && (
-                      <div className="text-xs text-slate-500 flex items-center gap-1.5">
+                      <div className="text-xs text-slate-500 flex items-center gap-1.5 pt-0.5">
                         <UserCheck className="w-3.5 h-3.5 text-audit-blue shrink-0" />
                         ผู้รับผิดชอบ: {item.responsibleIds.map((id) => employeeName(id)).join(", ")}
                       </div>

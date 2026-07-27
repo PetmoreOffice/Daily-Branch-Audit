@@ -28,10 +28,17 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
 
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [contactForm, setContactForm] = useState({ email: "", phone: "" });
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   useEffect(() => {
     loadData();
   }, [selectedEmployeeId]);
+
+  useEffect(() => {
+    if (selectedEmp) {
+      setSelectedRole(selectedEmp.role || ROLES[0]);
+    }
+  }, [selectedEmp]);
 
   async function loadData() {
     try {
@@ -103,6 +110,20 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
       setIsEditingContact(false);
     } catch (error) {
       alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateRole = async () => {
+    if (!selectedEmp || !selectedRole) return;
+    setIsSaving(true);
+    try {
+      await updateEmployee(selectedEmp.id, { role: selectedRole });
+      setSelectedEmp((prev: any) => prev ? { ...prev, role: selectedRole } : null);
+      await loadData();
+    } catch (error) {
+      alert("เกิดข้อผิดพลาดในการปรับเปลี่ยนตำแหน่ง");
     } finally {
       setIsSaving(false);
     }
@@ -309,6 +330,33 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                 )}
                 <div className="flex items-center gap-2 text-slate-600 pt-2 border-t border-audit-hairline">
                   <Building2 className="w-3.5 h-3.5 text-audit-blue" /> สาขาปัจจุบัน: {selectedEmp.currentBranch?.name || branchName(selectedEmp.branchId)}
+                </div>
+              </div>
+
+              {/* Change Position Dropdown */}
+              <div className="pt-3 border-t border-audit-hairline">
+                <div className="flex items-center justify-between mb-1.5">
+                  <h3 className="text-xs font-bold text-navy">ปรับ / เปลี่ยนตำแหน่ง</h3>
+                  <span className="text-[10px] font-semibold text-slate-400">ปัจจุบัน: {selectedEmp.role}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="flex-1 border border-audit-hairline rounded p-1.5 text-xs focus:ring-1 focus:ring-audit-blue outline-none bg-slate-50 font-medium text-navy"
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleUpdateRole}
+                    disabled={selectedRole === selectedEmp.role || isSaving}
+                    className="px-3 py-1.5 bg-audit-blue text-white rounded text-xs font-bold hover:bg-navy disabled:opacity-40 transition shrink-0 flex items-center gap-1"
+                  >
+                    {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                    บันทึก
+                  </button>
                 </div>
               </div>
 

@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 const ZONES = ["เขตกรุงเทพฯ", "เขตภาคกลาง", "เขตภาคเหนือ", "เขตภาคใต้"];
 
 const BRANCHES = [
-  { code: "NKR-01", name: "สาขาหลังเดอะมอลโคราช", zoneName: ZONES[0], province: "นครราชสีมา" },
+  { code: "NKR-01", name: "สาขาหลังเดอะมอลล์", zoneName: ZONES[0], province: "นครราชสีมา" },
   { code: "NKR-02", name: "สาขาบ้านเกาะ", zoneName: ZONES[0], province: "นครราชสีมา" },
   { code: "NKR-03", name: "สาขาหนองไผ่ล้อม", zoneName: ZONES[0], province: "นครราชสีมา" },
   { code: "NKR-04", name: "สาขาปากช่อง", zoneName: ZONES[1], province: "นครราชสีมา" },

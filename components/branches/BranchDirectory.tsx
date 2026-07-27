@@ -48,7 +48,7 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
                   </div>
                   <h3 className="text-base font-extrabold text-navy leading-tight">{branch.name}</h3>
                   <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 text-audit-slate shrink-0" /> {branch.province} ({branch.zone})
+                    <MapPin className="w-3.5 h-3.5 text-audit-slate shrink-0" /> {branch.province}
                   </div>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-status-okBg text-status-ok border border-emerald-200 shrink-0">

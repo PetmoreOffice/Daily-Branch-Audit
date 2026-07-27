@@ -5,7 +5,7 @@ import {
   ClipboardCheck, User, Lock, Eye, EyeOff, Loader2, ArrowRight,
   UserPlus, KeyRound, CheckCircle2, X, Send, Mail, Sparkles,
   BarChart3, Building2, Users2, Zap, ShieldCheck, TrendingUp,
-  ChevronRight,
+  ChevronRight, AlertTriangle,
 } from "lucide-react";
 import { UserRole } from "@/lib/types/audit";
 import { supabase } from "@/lib/supabase";
@@ -16,8 +16,12 @@ interface LoginPageProps {
 
 export const ONLY_ADMIN_EMAIL = "mis_01@newgenman.co.th";
 export const ADMIN_EMAILS: string[] = [ONLY_ADMIN_EMAIL, "mis_01"];
+export const ALLOWED_COMPANY_DOMAINS: string[] = ["@newgenman.co.th", "@petmoregroups.com"];
 
-
+export function isAllowedCompanyEmail(emailStr: string): boolean {
+  const clean = emailStr.toLowerCase().trim();
+  return ALLOWED_COMPANY_DOMAINS.some((domain) => clean.endsWith(domain));
+}
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -64,6 +68,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     e.preventDefault();
     const cleanUser = username.trim();
     if (!cleanUser || !password.trim()) { setErrorMsg("กรุณากรอกชื่อผู้ใช้งานและรหัสผ่านให้ครบถ้วน"); return; }
+
+    if (cleanUser.includes("@") && !isAllowedCompanyEmail(cleanUser)) {
+      setErrorMsg("อนุญาตให้ใช้เฉพาะอีเมลบริษัทเท่านั้น");
+      return;
+    }
+
     setErrorMsg(""); setIsLoading(true);
 
     try {
@@ -71,7 +81,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         ? cleanUser
         : cleanUser.toLowerCase() === "mis_01"
         ? ONLY_ADMIN_EMAIL
-        : `${cleanUser}@branch-audit.com`;
+        : `${cleanUser}@newgenman.co.th`;
 
       // 1. Attempt login with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -106,6 +116,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     if (!fullName.trim() || !email.trim() || !signUpUsername.trim() || !signUpPassword) { setErrorMsg("กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
+    if (!isAllowedCompanyEmail(email)) {
+      setErrorMsg("อนุญาตให้ใช้เฉพาะอีเมลบริษัทเท่านั้น");
+      return;
+    }
     if (signUpPassword !== confirmPassword) { setErrorMsg("รหัสผ่านไม่ตรงกัน"); return; }
     if (signUpPassword.length < 6) { setErrorMsg("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"); return; }
     setErrorMsg(""); setIsLoading(true);
@@ -136,9 +150,38 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   async function handleReset(e: React.FormEvent) {
     e.preventDefault();
     if (!resetEmail) { setResetError("กรุณากรอกอีเมล"); return; }
+    if (!isAllowedCompanyEmail(resetEmail)) {
+      setResetError("อนุญาตให้ใช้เฉพาะอีเมลบริษัทเท่านั้น");
+      return;
+    }
     setResetError(""); setResetLoading(true);
-    try { await supabase.auth.resetPasswordForEmail(resetEmail.trim(), { redirectTo: typeof window !== "undefined" ? window.location.origin : undefined }); } catch { /* fallback */ }
-    setResetLoading(false); setResetSent(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+      });
+
+      if (error) {
+        if (
+          error.message.toLowerCase().includes("rate limit") ||
+          error.message.toLowerCase().includes("exceeded") ||
+          error.status === 429
+        ) {
+          setResetError(
+            "ส่งอีเมลรีเซ็ตถี่เกินไป (ติด Email Rate Limit ของ Supabase) กรุณารอ 1 ชั่วโมง หรือตั้งค่า Custom SMTP ใน Supabase Dashboard"
+          );
+        } else {
+          setResetError(error.message || "เกิดข้อผิดพลาดในการส่งอีเมลรีเซ็ตรหัสผ่าน");
+        }
+        setResetLoading(false);
+        return;
+      }
+
+      setResetLoading(false);
+      setResetSent(true);
+    } catch (err: any) {
+      setResetError("ไม่สามารถเชื่อมต่อระบบส่งอีเมลได้");
+      setResetLoading(false);
+    }
   }
 
   const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/60 focus:bg-white/8 focus:ring-1 focus:ring-blue-500/40 transition-all duration-200";
@@ -328,7 +371,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       </label>
                       <button
                         type="button"
-                        onClick={() => { setShowForgotModal(true); setResetSent(false); setResetEmail(username.includes("@") ? username : ""); setResetError(""); }}
+                        onClick={() => { setShowForgotModal(true); setResetSent(false); setResetEmail(username.includes("@") && isAllowedCompanyEmail(username) ? username : ""); setResetError(""); }}
                         className="text-blue-400/80 hover:text-blue-300 font-semibold transition"
                       >
                         ลืมรหัสผ่าน?
@@ -345,7 +388,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 {isSignUp && (
                   <form onSubmit={handleSignUp} className="space-y-3">
                     <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="ชื่อ-นามสกุล" className={inputClass} />
-                    <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="อีเมล (Email)" className={inputClass} />
+                    <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="อีเมลบริษัท" className={inputClass} />
                     <input type="text" required value={signUpUsername} onChange={(e) => setSignUpUsername(e.target.value)} placeholder="ชื่อผู้ใช้งาน (Username)" className={inputClass} />
                     <div className="grid grid-cols-2 gap-2.5">
                       <input type="password" required value={signUpPassword} onChange={(e) => setSignUpPassword(e.target.value)} placeholder="รหัสผ่าน" className={inputClass} />
@@ -393,11 +436,23 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               </div>
               <div>
                 <h3 className="text-base font-black text-white">รีเซ็ตรหัสผ่าน</h3>
-                <p className="text-xs text-white/40">ระบบจะส่ง Magic Link ไปยังอีเมลของคุณ</p>
+                <p className="text-xs text-white/40">ระบบจะส่ง Magic Link ไปยังอีเมลของบริษัทคุณ</p>
               </div>
             </div>
 
-            {resetError && <div className="mb-3 p-3 rounded-xl text-xs text-red-300 border border-red-500/25 mb-4" style={{ background: "rgba(239,68,68,0.08)" }}>{resetError}</div>}
+            {resetError && (
+              <div className="mb-4 p-3.5 rounded-xl text-xs text-amber-200 border border-amber-500/30 space-y-1.5" style={{ background: "rgba(245,158,11,0.1)" }}>
+                <div className="font-bold flex items-center gap-1.5 text-amber-400">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{resetError}</span>
+                </div>
+                {resetError.toLowerCase().includes("rate limit") && (
+                  <div className="text-[11px] text-amber-200/80 leading-relaxed pl-5">
+                    ข้อจำกัดอีเมลฟรีของ Supabase อนุญาตส่งเพียง 3 ฉบับ/ชม. ท่านสามารถเปลี่ยนไปตั้งค่า Custom SMTP ใน Supabase Dashboard หรือติดต่อแอดมินเพื่อรีเซ็ตรหัสผ่านได้ทันที
+                  </div>
+                )}
+              </div>
+            )}
 
             {!resetSent ? (
               <form onSubmit={handleReset} className="space-y-4">
@@ -406,7 +461,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   <input
                     type="email" required value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="กรอกอีเมลที่ใช้ลงทะเบียน"
+                    placeholder="อีเมลบริษัท"
                     className={`${inputClass} pl-11`}
                   />
                 </div>

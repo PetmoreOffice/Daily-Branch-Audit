@@ -12,7 +12,7 @@ const rng = makeRng(42);
 export const ZONES: string[] = ["เขตกรุงเทพฯ", "เขตภาคกลาง", "เขตภาคเหนือ", "เขตภาคใต้"];
 
 export const BRANCHES: Branch[] = [
-  { id: "B01", code: "NKR-01", name: "สาขาหลังเดอะมอลโคราช", zone: ZONES[0], province: "นครราชสีมา", status: "เปิดใช้งาน" },
+  { id: "B01", code: "NKR-01", name: "สาขาหลังเดอะมอลล์", zone: ZONES[0], province: "นครราชสีมา", status: "เปิดใช้งาน" },
   { id: "B02", code: "NKR-02", name: "สาขาบ้านเกาะ", zone: ZONES[0], province: "นครราชสีมา", status: "เปิดใช้งาน" },
   { id: "B03", code: "NKR-03", name: "สาขาหนองไผ่ล้อม", zone: ZONES[0], province: "นครราชสีมา", status: "เปิดใช้งาน" },
   { id: "B04", code: "NKR-04", name: "สาขาปากช่อง", zone: ZONES[1], province: "นครราชสีมา", status: "เปิดใช้งาน" },
@@ -24,11 +24,12 @@ export const ROLES = [
   "หัวหน้าสาขา",
   "พนักงานจัดเรียงสินค้า",
   "PC ร้านส่ง",
-  "แคชเชียร์"
+  "แคชเชียร์",
+  "Promote"
 ];
 
 const INITIAL_EMPLOYEES_DATA: Omit<Employee, "zone">[] = [
-  // B01: สาขาหลังเดอะมอลโคราช
+  // B01: สาขาหลังเดอะมอลล์
   { id: "EMP-0001", code: "EMP-0001", firstName: "สมชาย", lastName: "ใจดี", nickname: "ชาย", role: "ผู้จัดการสาขา", branchId: "B01", email: "somchai.j@company.co.th", phone: "081-234-5678", assignments: [{ branchId: "B01", startDate: "2025-01-01", endDate: null }] },
   { id: "EMP-0002", code: "EMP-0002", firstName: "วิภา", lastName: "ศรีสุข", nickname: "ภา", role: "หัวหน้าสาขา", branchId: "B01", email: "wipa.s@company.co.th", phone: "082-345-6789", assignments: [{ branchId: "B01", startDate: "2025-01-01", endDate: null }] },
   { id: "EMP-0003", code: "EMP-0003", firstName: "ศรุต", lastName: "แสงทอง", nickname: "รุต", role: "พนักงานจัดเรียงสินค้า", branchId: "B01", email: "sarut.s@company.co.th", phone: "083-456-7890", assignments: [{ branchId: "B01", startDate: "2025-02-15", endDate: null }] },
@@ -173,7 +174,7 @@ export const TEMPLATE: AuditTemplate = {
       name: "5. อื่นๆ",
       items: [
         { id: "I16", name: "5.2 การติดตามงาน การตรวจสอบ Checklist ประจำวัน", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
-        { id: "I17", name: "5.3 ไม่มีการร้องเรียงจากลูกค้า", maxScore: 10, minScore: 5, requirePhoto: false, requireResponsible: true },
+        { id: "I17", name: "5.3 ไม่มีการร้องเรียนจากลูกค้า", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
         { id: "I18", name: "5.4 การประสานงาน", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
         { id: "I19", name: "5.5 อื่นๆ", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
       ],
