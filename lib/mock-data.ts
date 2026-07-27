@@ -267,7 +267,24 @@ export function employeeName(id: string): string {
   return e ? `${e.firstName} ${e.lastName}` : id;
 }
 
-export function formatAuditorName(auditorStr?: string | null): string {
+export function getBranchManagerName(branchId?: string): string | null {
+  if (!branchId) return null;
+  const manager = EMPLOYEES.find((e) => e.branchId === branchId && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
+  if (manager) {
+    return `${manager.firstName} ${manager.lastName} (ผู้จัดการสาขา)`;
+  }
+  return null;
+}
+
+export function formatAuditorName(auditorStr?: string | null, branchId?: string): string {
+  // If branchId is provided and auditorStr is an email or generic, fallback to Branch Manager
+  if (branchId) {
+    const managerName = getBranchManagerName(branchId);
+    if (managerName && (!auditorStr || auditorStr.includes("@") || auditorStr === "ผู้ตรวจประเมิน" || auditorStr.includes("mis_01"))) {
+      return managerName;
+    }
+  }
+
   if (!auditorStr) return "ผู้ตรวจประเมิน";
   const s = auditorStr.trim();
   if (!s) return "ผู้ตรวจประเมิน";
@@ -280,7 +297,7 @@ export function formatAuditorName(auditorStr?: string | null): string {
   // Check if matches an employee email in EMPLOYEES
   const empByEmail = EMPLOYEES.find((e) => e.email?.toLowerCase() === s.toLowerCase());
   if (empByEmail) {
-    return `${empByEmail.firstName} ${empByEmail.lastName}`;
+    return `${empByEmail.firstName} ${empByEmail.lastName} (${empByEmail.role})`;
   }
 
   // If contains @, format email prefix cleanly (e.g. winterkim.pm2@gmail.com -> Winterkim PM2)

@@ -133,7 +133,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                       <td className="p-3.5 font-bold text-audit-blue">{a.id}</td>
                       <td className="p-3.5 font-medium text-slate-600">{a.date}</td>
                       <td className="p-3.5 font-bold text-navy">{branchName(a.branchId)}</td>
-                      <td className="p-3.5 font-medium text-slate-600 max-w-[160px] truncate">{formatAuditorName(a.auditor)}</td>
+                      <td className="p-3.5 font-medium text-slate-600 max-w-[160px] truncate">{formatAuditorName(a.auditor, a.branchId)}</td>
                       <td className="p-3.5">
                         <div className="flex flex-col items-center gap-1">
                           <span className={`font-extrabold text-sm ${colors.text}`}>{score.toFixed(2)}<span className="text-[10px] font-semibold text-slate-400"> /5</span></span>
@@ -177,7 +177,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                 <span className="text-xs font-bold text-audit-blue">{selectedAudit.id}</span>
                 <h2 className="text-xl font-extrabold text-navy">{branchName(selectedAudit.branchId)}</h2>
                 <p className="text-xs text-audit-slate">
-                  ตรวจโดย {formatAuditorName(selectedAudit.auditor)} · วันที่ {selectedAudit.date}
+                  ตรวจโดย {formatAuditorName(selectedAudit.auditor, selectedAudit.branchId)} · วันที่ {selectedAudit.date}
                 </p>
               </div>
               <div className="flex items-center gap-3">

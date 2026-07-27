@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Star, Camera, Search, Check, AlertCircle, MapPin, X } from "lucide-react";
-import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName } from "@/lib/mock-data";
+import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchManagerName } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 
 interface NewAuditWizardProps {
@@ -15,6 +15,14 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [branchId, setBranchId] = useState<string>("");
   const [auditorInput, setAuditorInput] = useState<string>(formatAuditorName(auditorName));
+
+  function handleBranchChange(selectedId: string) {
+    setBranchId(selectedId);
+    const mgr = getBranchManagerName(selectedId);
+    if (mgr) {
+      setAuditorInput(mgr);
+    }
+  }
 
   const [answers, setAnswers] = useState<Record<string, Partial<AuditItemResult>>>({});
 
@@ -120,7 +128,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             <label className="block text-xs font-bold text-navy mb-1">เลือกร้านสาขาที่ทำการตรวจ</label>
             <select
               value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
+              onChange={(e) => handleBranchChange(e.target.value)}
               className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
             >
               <option value="">-- เลือกสาขา --</option>
