@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Star, Camera, Search, Check, AlertCircle, MapPin, X } from "lucide-react";
-import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchManagerName } from "@/lib/mock-data";
+import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchHeadName, getAuditorCandidates } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 
 interface NewAuditWizardProps {
@@ -15,12 +15,14 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [branchId, setBranchId] = useState<string>("");
   const [auditorInput, setAuditorInput] = useState<string>(formatAuditorName(auditorName));
+  const [isCustomAuditor, setIsCustomAuditor] = useState<boolean>(false);
 
   function handleBranchChange(selectedId: string) {
     setBranchId(selectedId);
-    const mgr = getBranchManagerName(selectedId);
-    if (mgr) {
-      setAuditorInput(mgr);
+    const headName = getBranchHeadName(selectedId);
+    if (headName) {
+      setAuditorInput(headName);
+      setIsCustomAuditor(false);
     }
   }
 
@@ -141,14 +143,59 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-navy mb-1">ชื่อผู้ตรวจประเมิน</label>
-            <input
-              type="text"
-              value={auditorInput}
-              onChange={(e) => setAuditorInput(e.target.value)}
-              placeholder="กรอกชื่อ-นามสกุล ผู้ตรวจประเมิน..."
+            <label className="block text-xs font-bold text-navy mb-1">
+              ชื่อผู้ตรวจประเมิน (เลือกจากหัวหน้าสาขา / ผู้จัดการสาขา)
+            </label>
+            <select
+              value={isCustomAuditor ? "__CUSTOM__" : auditorInput}
+              onChange={(e) => {
+                if (e.target.value === "__CUSTOM__") {
+                  setIsCustomAuditor(true);
+                  setAuditorInput("");
+                } else {
+                  setIsCustomAuditor(false);
+                  setAuditorInput(e.target.value);
+                }
+              }}
               className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
-            />
+            >
+              <option value="">-- เลือกผู้ตรวจประเมิน --</option>
+              {branchId && (
+                <optgroup label={`📌 หัวหน้าสาขา / ผู้จัดการสาขา (${branch?.name})`}>
+                  {EMPLOYEES.filter(
+                    (e) => e.branchId === branchId && (e.role === "หัวหน้าสาขา" || e.role === "ผู้จัดการสาขา")
+                  ).map((e) => {
+                    const val = `${e.firstName} ${e.lastName} (${e.role})`;
+                    return (
+                      <option key={e.id} value={val}>
+                        {val}
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              )}
+              <optgroup label="📋 หัวหน้าสาขา / ผู้จัดการสาขา ทุกสาขา">
+                {getAuditorCandidates().map((c) => {
+                  const val = `${c.name} (${c.role})`;
+                  return (
+                    <option key={c.id} value={val}>
+                      {c.displayName}
+                    </option>
+                  );
+                })}
+              </optgroup>
+              <option value="__CUSTOM__">✏️ + ระบุชื่อผู้ตรวจท่านอื่น...</option>
+            </select>
+
+            {isCustomAuditor && (
+              <input
+                type="text"
+                value={auditorInput}
+                onChange={(e) => setAuditorInput(e.target.value)}
+                placeholder="กรอกชื่อ-นามสกุล ผู้ตรวจประเมิน..."
+                className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue mt-2"
+              />
+            )}
           </div>
 
 

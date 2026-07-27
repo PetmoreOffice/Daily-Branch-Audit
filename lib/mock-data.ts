@@ -267,6 +267,16 @@ export function employeeName(id: string): string {
   return e ? `${e.firstName} ${e.lastName}` : id;
 }
 
+export function getBranchHeadName(branchId?: string): string | null {
+  if (!branchId) return null;
+  const head = EMPLOYEES.find((e) => e.branchId === branchId && e.role === "หัวหน้าสาขา") ||
+               EMPLOYEES.find((e) => e.branchId === branchId && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
+  if (head) {
+    return `${head.firstName} ${head.lastName} (${head.role})`;
+  }
+  return null;
+}
+
 export function getBranchManagerName(branchId?: string): string | null {
   if (!branchId) return null;
   const manager = EMPLOYEES.find((e) => e.branchId === branchId && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
@@ -276,12 +286,28 @@ export function getBranchManagerName(branchId?: string): string | null {
   return null;
 }
 
+export function getAuditorCandidates() {
+  return EMPLOYEES.filter(
+    (e) => e.role === "หัวหน้าสาขา" || e.role === "ผู้จัดการสาขา"
+  ).map((e) => {
+    const b = BRANCHES.find((b) => b.id === e.branchId);
+    return {
+      id: e.id,
+      name: `${e.firstName} ${e.lastName}`,
+      role: e.role,
+      branchId: e.branchId,
+      branchName: b ? b.name : "",
+      displayName: `${e.firstName} ${e.lastName} (${e.role} - ${b ? b.name : ""})`,
+    };
+  });
+}
+
 export function formatAuditorName(auditorStr?: string | null, branchId?: string): string {
-  // If branchId is provided and auditorStr is an email or generic, fallback to Branch Manager
+  // If branchId is provided and auditorStr is an email or generic, fallback to Head of Branch / Branch Manager
   if (branchId) {
-    const managerName = getBranchManagerName(branchId);
-    if (managerName && (!auditorStr || auditorStr.includes("@") || auditorStr === "ผู้ตรวจประเมิน" || auditorStr.includes("mis_01"))) {
-      return managerName;
+    const headName = getBranchHeadName(branchId);
+    if (headName && (!auditorStr || auditorStr.includes("@") || auditorStr === "ผู้ตรวจประเมิน" || auditorStr.includes("mis_01"))) {
+      return headName;
     }
   }
 
