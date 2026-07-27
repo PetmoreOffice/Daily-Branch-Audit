@@ -3,9 +3,20 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+function cleanBranchName(name?: string | null): string {
+  if (!name) return "";
+  return name.replace(/สาขาหลังเดอะมอลโคราช|หลังเดอะมอลโคราช/g, "สาขาหลังเดอะมอลล์");
+}
+
 // 1. Get all employees with their branch and zone
 export async function getEmployees() {
   try {
+    // Auto-update branch names in DB if old name exists
+    await prisma.branch.updateMany({
+      where: { name: { contains: "เดอะมอลโคราช" } },
+      data: { name: "สาขาหลังเดอะมอลล์" },
+    }).catch(() => {});
+
     const employees = await prisma.employee.findMany({
       include: {
         currentBranch: true,
@@ -23,10 +34,19 @@ export async function getEmployees() {
       },
     });
 
-    // Transform to match the UI shape
+    // Transform to match the UI shape and sanitize branch names
     return employees.map((e) => ({
       ...e,
       zone: e.zoneName,
+      currentBranch: e.currentBranch
+        ? { ...e.currentBranch, name: cleanBranchName(e.currentBranch.name) }
+        : e.currentBranch,
+      assignments: e.assignments.map((a) => ({
+        ...a,
+        branch: a.branch
+          ? { ...a.branch, name: cleanBranchName(a.branch.name) }
+          : a.branch,
+      })),
     }));
   } catch (error) {
     console.error("Error fetching employees:", error);
@@ -37,11 +57,15 @@ export async function getEmployees() {
 // 2. Get all branches (for transfer dropdown)
 export async function getBranches() {
   try {
-    return await prisma.branch.findMany({
+    const branches = await prisma.branch.findMany({
       orderBy: {
         name: "asc",
       },
     });
+    return branches.map((b) => ({
+      ...b,
+      name: cleanBranchName(b.name),
+    }));
   } catch (error) {
     console.error("Error fetching branches:", error);
     throw new Error("Failed to fetch branches");

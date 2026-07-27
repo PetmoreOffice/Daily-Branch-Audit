@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, Users, History, Mail, Phone, Building2, Plus, X, Loader2 } from "lucide-react";
-import { ROLES, addMockEmployee, syncEmployees } from "@/lib/mock-data";
+import { ROLES, addMockEmployee, syncEmployees, cleanBranchName, branchName } from "@/lib/mock-data";
 import { getEmployees, getBranches, addEmployee, transferEmployee, updateEmployee } from "@/app/actions/employee";
 
 interface EmployeeDirectoryProps {
@@ -226,8 +226,8 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                       {e.nickname && <span className="text-audit-blue mr-1">({e.nickname})</span>} {e.firstName} {e.lastName}
                     </td>
                     <td className="p-3.5 text-slate-600">{e.role}</td>
-                    <td className="p-3.5 text-slate-700 font-medium truncate max-w-[180px]" title={e.currentBranch?.name || branchName(e.branchId)}>
-                      {e.currentBranch?.name || branchName(e.branchId)}
+                    <td className="p-3.5 text-slate-700 font-medium truncate max-w-[180px]" title={cleanBranchName(e.currentBranch?.name) || branchName(e.branchId)}>
+                      {cleanBranchName(e.currentBranch?.name) || branchName(e.branchId)}
                     </td>
                     <td className="p-3.5 text-center">
                       <button
@@ -329,7 +329,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-slate-600 pt-2 border-t border-audit-hairline">
-                  <Building2 className="w-3.5 h-3.5 text-audit-blue" /> สาขาปัจจุบัน: {selectedEmp.currentBranch?.name || branchName(selectedEmp.branchId)}
+                  <Building2 className="w-3.5 h-3.5 text-audit-blue" /> สาขาปัจจุบัน: {cleanBranchName(selectedEmp.currentBranch?.name) || branchName(selectedEmp.branchId)}
                 </div>
               </div>
 
@@ -373,7 +373,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                         className="w-full border border-audit-hairline rounded p-1.5 text-xs focus:ring-1 focus:ring-audit-blue outline-none"
                       >
                         {branches.map(b => (
-                          <option key={b.id} value={b.id}>{b.name}</option>
+                          <option key={b.id} value={b.id}>{cleanBranchName(b.name)}</option>
                         ))}
                       </select>
                     </div>
@@ -407,7 +407,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                   {selectedEmp.assignments && selectedEmp.assignments.map((asg: any, idx: number) => (
                     <div key={idx} className="relative pl-4 space-y-0.5">
                       <div className="absolute -left-[11px] top-1.5 w-3 h-3 rounded-full bg-audit-blue border-2 border-white"></div>
-                      <div className="text-xs font-bold text-navy">{asg.branch?.name || branchName(asg.branchId)}</div>
+                      <div className="text-xs font-bold text-navy">{cleanBranchName(asg.branch?.name) || branchName(asg.branchId)}</div>
                       <div className="text-[11px] text-slate-500">
                         ตั้งแต่วันที่ {asg.startDate} {asg.endDate ? `ถึง ${asg.endDate}` : "(ปัจจุบัน)"}
                       </div>

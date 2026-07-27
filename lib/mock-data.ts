@@ -254,8 +254,14 @@ export function avgScore(items: AuditItemResult[]): number {
   return max ? (got / max) * 5 : 0;
 }
 
+export function cleanBranchName(name?: string | null): string {
+  if (!name) return "";
+  return name.replace(/สาขาหลังเดอะมอลโคราช|หลังเดอะมอลโคราช/g, "สาขาหลังเดอะมอลล์");
+}
+
 export function branchName(id: string): string {
-  return BRANCHES.find((b) => b.id === id)?.name || id;
+  const found = BRANCHES.find((b) => b.id === id)?.name || id;
+  return cleanBranchName(found);
 }
 
 export function itemName(id: string): string {
