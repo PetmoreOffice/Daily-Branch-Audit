@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Star, Camera, Search, Check, AlertCircle, MapPin, X } from "lucide-react";
-import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES } from "@/lib/mock-data";
+import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 
 interface NewAuditWizardProps {
@@ -14,6 +14,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
   const [step, setStep] = useState<number>(1);
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [branchId, setBranchId] = useState<string>("");
+  const [auditorInput, setAuditorInput] = useState<string>(formatAuditorName(auditorName));
 
   const [answers, setAnswers] = useState<Record<string, Partial<AuditItemResult>>>({});
 
@@ -64,7 +65,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
       date,
       branchId,
       templateId: TEMPLATE.id,
-      auditor: auditorName || "ผู้ตรวจประเมิน",
+      auditor: auditorInput.trim() || formatAuditorName(auditorName),
       gps: "ไม่ระบุ",
       items,
     };
@@ -129,6 +130,17 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-navy mb-1">ชื่อผู้ตรวจประเมิน</label>
+            <input
+              type="text"
+              value={auditorInput}
+              onChange={(e) => setAuditorInput(e.target.value)}
+              placeholder="กรอกชื่อ-นามสกุล ผู้ตรวจประเมิน..."
+              className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
+            />
           </div>
 
 

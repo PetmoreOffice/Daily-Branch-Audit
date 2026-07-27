@@ -266,3 +266,33 @@ export function employeeName(id: string): string {
   const e = EMPLOYEES.find((e) => e.id === id);
   return e ? `${e.firstName} ${e.lastName}` : id;
 }
+
+export function formatAuditorName(auditorStr?: string | null): string {
+  if (!auditorStr) return "ผู้ตรวจประเมิน";
+  const s = auditorStr.trim();
+  if (!s) return "ผู้ตรวจประเมิน";
+
+  // Check exact admin email/username
+  if (s.toLowerCase().includes("mis_01")) {
+    return "ผู้ดูแลระบบ (Admin)";
+  }
+
+  // Check if matches an employee email in EMPLOYEES
+  const empByEmail = EMPLOYEES.find((e) => e.email?.toLowerCase() === s.toLowerCase());
+  if (empByEmail) {
+    return `${empByEmail.firstName} ${empByEmail.lastName}`;
+  }
+
+  // If contains @, format email prefix cleanly (e.g. winterkim.pm2@gmail.com -> Winterkim PM2)
+  if (s.includes("@")) {
+    const prefix = s.split("@")[0];
+    const parts = prefix.split(/[._-]/).filter(Boolean);
+    if (parts.length > 0) {
+      return parts
+        .map((p) => (p.length <= 3 ? p.toUpperCase() : p.charAt(0).toUpperCase() + p.slice(1)))
+        .join(" ");
+    }
+  }
+
+  return s;
+}

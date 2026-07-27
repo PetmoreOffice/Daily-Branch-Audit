@@ -93,14 +93,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         setIsLoading(false);
         const roleFromDb = data.user.user_metadata?.role as UserRole;
         const assignedRole = inferRole(cleanUser) === "admin" ? "admin" : (roleFromDb || inferRole(cleanUser));
-        onLogin(assignedRole, data.user.email || cleanUser);
+        const displayName = data.user.user_metadata?.fullName || data.user.email || cleanUser;
+        onLogin(assignedRole, displayName);
         return;
       }
 
       // 2. For designated Admin email (mis_01@newgenman.co.th / mis_01), authenticate seamlessly as Admin
       if (inferRole(cleanUser) === "admin") {
         setIsLoading(false);
-        onLogin("admin", ONLY_ADMIN_EMAIL);
+        onLogin("admin", "ผู้ดูแลระบบ (Admin)");
         return;
       }
 
