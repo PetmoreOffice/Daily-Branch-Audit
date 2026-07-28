@@ -164,7 +164,7 @@ export async function getAudits(): Promise<Audit[]> {
       items: a.items.map((item) => {
         const meta = dbItemMap[item.itemId];
         const mockId = meta
-          ? (mockItemLookup[`${meta.sectionName}||${meta.itemName}`] || item.itemId)
+          ? (mockItemLookup[`${meta.sectionName}||${meta.itemName}`] || meta.itemName || item.itemId)
           : item.itemId;
         return {
           itemId: mockId,

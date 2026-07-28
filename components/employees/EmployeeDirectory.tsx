@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, Users, History, Mail, Phone, Building2, Plus, X, Loader2 } from "lucide-react";
-import { ROLES, addMockEmployee, syncEmployees, cleanBranchName, branchName } from "@/lib/mock-data";
+import { ROLES, EMPLOYEES, BRANCHES, addMockEmployee, syncEmployees, cleanBranchName } from "@/lib/mock-data";
 import { getEmployees, getBranches, addEmployee, transferEmployee, updateEmployee } from "@/app/actions/employee";
 
 interface EmployeeDirectoryProps {
@@ -46,25 +46,27 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
         getEmployees(),
         getBranches()
       ]);
-      if (empData && empData.length > 0) {
-        syncEmployees(empData);
-      }
-      setEmployees(empData);
-      setBranches(branchData);
-      
-      if (branchData.length > 0) {
-        setNewEmp((prev: any) => ({ ...prev, branchId: branchData[0].id }));
-        setTransferBranchId(branchData[0].id);
+      const validEmps = empData || [];
+      const validBranches = branchData || [];
+
+      syncEmployees(validEmps);
+      setEmployees(validEmps);
+      setBranches(validBranches);
+
+      if (validBranches.length > 0) {
+        setNewEmp((prev: any) => ({ ...prev, branchId: validBranches[0].id }));
+        setTransferBranchId(validBranches[0].id);
       }
 
       if (selectedEmployeeId) {
-        setSelectedEmp(empData.find((e: any) => e.id === selectedEmployeeId) || null);
+        setSelectedEmp(validEmps.find((e: any) => e.id === selectedEmployeeId) || null);
       } else if (selectedEmp) {
-        // refresh selected emp data if already selected
-        setSelectedEmp(empData.find((e: any) => e.id === selectedEmp.id) || null);
+        setSelectedEmp(validEmps.find((e: any) => e.id === selectedEmp.id) || null);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error loading employee data from Supabase DB:", err);
+      setEmployees([]);
+      setBranches([]);
     } finally {
       setLoading(false);
     }

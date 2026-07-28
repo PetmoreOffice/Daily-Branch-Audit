@@ -28,37 +28,9 @@ export const ROLES = [
   "Promote"
 ];
 
-const INITIAL_EMPLOYEES_DATA: Omit<Employee, "zone">[] = [
-  // B01: สาขาหลังเดอะมอลล์
-  { id: "EMP-0001", code: "EMP-0001", firstName: "สมชาย", lastName: "ใจดี", nickname: "ชาย", role: "ผู้จัดการสาขา", branchId: "B01", email: "somchai.j@company.co.th", phone: "081-234-5678", assignments: [{ branchId: "B01", startDate: "2025-01-01", endDate: null }] },
-  { id: "EMP-0002", code: "EMP-0002", firstName: "วิภา", lastName: "ศรีสุข", nickname: "ภา", role: "หัวหน้าสาขา", branchId: "B01", email: "wipa.s@company.co.th", phone: "082-345-6789", assignments: [{ branchId: "B01", startDate: "2025-01-01", endDate: null }] },
-  { id: "EMP-0003", code: "EMP-0003", firstName: "ศรุต", lastName: "แสงทอง", nickname: "รุต", role: "พนักงานจัดเรียงสินค้า", branchId: "B01", email: "sarut.s@company.co.th", phone: "083-456-7890", assignments: [{ branchId: "B01", startDate: "2025-02-15", endDate: null }] },
-  { id: "EMP-0004", code: "EMP-0004", firstName: "เอกพล", lastName: "บุญมี", nickname: "เอก", role: "แคชเชียร์", branchId: "B01", email: "akapol.b@company.co.th", phone: "084-567-8901", assignments: [{ branchId: "B01", startDate: "2025-03-01", endDate: null }] },
-  { id: "EMP-0005", code: "EMP-0005", firstName: "จิราพร", lastName: "พงษ์ไพร", nickname: "พร", role: "พนักงานขายร้านส่ง", branchId: "B01", email: "jiraporn.p@company.co.th", phone: "085-678-9012", assignments: [{ branchId: "B01", startDate: "2025-04-10", endDate: null }] },
+const INITIAL_EMPLOYEES_DATA: Omit<Employee, "zone">[] = [];
 
-  // B02: สาขาบ้านเกาะ
-  { id: "EMP-0006", code: "EMP-0006", firstName: "ปวีณา", lastName: "วงศ์สกุล", nickname: "ปอ", role: "ผู้จัดการสาขา", branchId: "B02", email: "paweena.w@company.co.th", phone: "086-789-0123", assignments: [{ branchId: "B02", startDate: "2025-01-01", endDate: null }] },
-  { id: "EMP-0007", code: "EMP-0007", firstName: "ธนกร", lastName: "เจริญพร", nickname: "กร", role: "หัวหน้าสาขา", branchId: "B02", email: "thanakorn.c@company.co.th", phone: "087-890-1234", assignments: [{ branchId: "B02", startDate: "2025-01-15", endDate: null }] },
-  { id: "EMP-0008", code: "EMP-0008", firstName: "นภัสวรรณ", lastName: "มั่งมี", nickname: "วรรณ", role: "แคชเชียร์", branchId: "B02", email: "napassawan.m@company.co.th", phone: "088-901-2345", assignments: [{ branchId: "B02", startDate: "2025-02-01", endDate: null }] },
-  { id: "EMP-0009", code: "EMP-0009", firstName: "อรรถพล", lastName: "เกตุแก้ว", nickname: "พล", role: "พนักงานจัดเรียงสินค้า", branchId: "B02", email: "atthapol.k@company.co.th", phone: "089-012-3456", assignments: [{ branchId: "B02", startDate: "2025-03-15", endDate: null }] },
-
-  // B03: สาขาหนองไผ่ล้อม
-  { id: "EMP-0010", code: "EMP-0010", firstName: "กัญญาพัชร", lastName: "ศรีสุข", nickname: "กานต์", role: "ผู้จัดการสาขา", branchId: "B03", email: "kanyapat.s@company.co.th", phone: "081-111-2222", assignments: [{ branchId: "B03", startDate: "2025-01-01", endDate: null }] },
-  { id: "EMP-0011", code: "EMP-0011", firstName: "ณัฐวุฒิ", lastName: "บุญมี", nickname: "นัท", role: "หัวหน้าสาขา", branchId: "B03", email: "nattawut.b@company.co.th", phone: "082-222-3333", assignments: [{ branchId: "B03", startDate: "2025-02-01", endDate: null }] },
-  { id: "EMP-0012", code: "EMP-0012", firstName: "พิมพ์ชนก", lastName: "แสงทอง", nickname: "พิมพ์", role: "แคชเชียร์", branchId: "B03", email: "pimchanok.s@company.co.th", phone: "083-333-4444", assignments: [{ branchId: "B03", startDate: "2025-03-01", endDate: null }] },
-  { id: "EMP-0013", code: "EMP-0013", firstName: "สุริยา", lastName: "พงษ์ไพร", nickname: "ซัน", role: "พนักงานจัดเรียงสินค้า", branchId: "B03", email: "suriya.p@company.co.th", phone: "084-444-5555", assignments: [{ branchId: "B03", startDate: "2025-04-01", endDate: null }] },
-
-  // B04: สาขาปากช่อง
-  { id: "EMP-0014", code: "EMP-0014", firstName: "รัตนาภรณ์", lastName: "เจริญพร", nickname: "รัตน์", role: "ผู้จัดการสาขา", branchId: "B04", email: "rattanaporn.c@company.co.th", phone: "085-555-6666", assignments: [{ branchId: "B04", startDate: "2025-01-01", endDate: null }] },
-  { id: "EMP-0015", code: "EMP-0015", firstName: "ชนาธิป", lastName: "วงศ์สกุล", nickname: "ทิป", role: "หัวหน้าสาขา", branchId: "B04", email: "chanathip.w@company.co.th", phone: "086-666-7777", assignments: [{ branchId: "B04", startDate: "2025-01-15", endDate: null }] },
-  { id: "EMP-0016", code: "EMP-0016", firstName: "ธนวัตร", lastName: "มีสุข", nickname: "วัตร", role: "พนักงานจัดเรียงสินค้า", branchId: "B04", email: "thanawat.m@company.co.th", phone: "087-777-8888", assignments: [{ branchId: "B04", startDate: "2025-02-01", endDate: null }] },
-  { id: "EMP-0017", code: "EMP-0017", firstName: "อนุชา", lastName: "ใจดี", nickname: "ชา", role: "แคชเชียร์", branchId: "B04", email: "anucha.j@company.co.th", phone: "088-888-9999", assignments: [{ branchId: "B04", startDate: "2025-03-01", endDate: null }] },
-];
-
-export const EMPLOYEES: Employee[] = INITIAL_EMPLOYEES_DATA.map(e => ({
-  ...e,
-  zone: BRANCHES.find(b => b.id === e.branchId)?.zone || ZONES[0]
-}));
+export const EMPLOYEES: Employee[] = [];
 
 export function addMockEmployee(empData: any) {
   const newEmp: Employee = {
@@ -242,7 +214,7 @@ function buildAudits(): Audit[] {
   return audits.sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-export const SEED_AUDITS: Audit[] = buildAudits();
+export const SEED_AUDITS: Audit[] = [];
 
 export function avgScore(items: AuditItemResult[]): number {
   if (!items.length) return 0;
@@ -293,7 +265,7 @@ export function getBranchManagerName(branchId?: string): string | null {
 }
 
 export function getAuditorCandidates() {
-  return EMPLOYEES.filter(
+  const list = EMPLOYEES.filter(
     (e) => e.role === "หัวหน้าสาขา" || e.role === "ผู้จัดการสาขา"
   ).map((e) => {
     const b = BRANCHES.find((b) => b.id === e.branchId);
@@ -305,6 +277,12 @@ export function getAuditorCandidates() {
       branchName: b ? b.name : "",
       displayName: `${e.firstName} ${e.lastName} (${e.role} - ${b ? b.name : ""})`,
     };
+  });
+
+  return list.sort((a, b) => {
+    if (a.role === "ผู้จัดการสาขา" && b.role !== "ผู้จัดการสาขา") return -1;
+    if (a.role !== "ผู้จัดการสาขา" && b.role === "ผู้จัดการสาขา") return 1;
+    return a.name.localeCompare(b.name, "th");
   });
 }
 

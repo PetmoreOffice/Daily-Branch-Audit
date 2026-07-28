@@ -50,7 +50,7 @@ export async function getEmployees() {
     }));
   } catch (error) {
     console.error("Error fetching employees:", error);
-    throw new Error("Failed to fetch employees");
+    return [];
   }
 }
 
@@ -68,7 +68,7 @@ export async function getBranches() {
     }));
   } catch (error) {
     console.error("Error fetching branches:", error);
-    throw new Error("Failed to fetch branches");
+    return [];
   }
 }
 

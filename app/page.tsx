@@ -22,34 +22,30 @@ export default function Home() {
   const [auditsList, setAuditsList] = useState<Audit[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
-  // Load data from DB on mount (employee sync)
-  useEffect(() => {
-    async function initDbSync() {
-      try {
-        const emps = await getEmployees();
-        if (emps && emps.length > 0) syncEmployees(emps);
-      } catch {}
-    }
-    initDbSync();
-  }, []);
-
-  // Load audits from DB when authenticated
+  // Load data & audits from DB on mount
   const loadAuditsFromDb = useCallback(async () => {
     try {
       const dbAudits = await getAudits();
-      if (dbAudits && dbAudits.length > 0) {
+      if (dbAudits) {
         setAuditsList(dbAudits);
       }
     } catch (err) {
-      // Keep local state if DB unavailable
+      console.error("Failed to load audits from DB:", err);
     }
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadAuditsFromDb();
+    async function initDbSync() {
+      try {
+        const [emps, dbAudits] = await Promise.all([getEmployees(), getAudits()]);
+        if (emps && emps.length > 0) syncEmployees(emps);
+        if (dbAudits) setAuditsList(dbAudits);
+      } catch (err) {
+        console.error("Error syncing DB data on mount:", err);
+      }
     }
-  }, [isAuthenticated, loadAuditsFromDb]);
+    initDbSync();
+  }, []);
 
   function handleDrillBranch(_branchId: string) {
     setPage("audit_history");

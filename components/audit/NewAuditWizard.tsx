@@ -1,9 +1,8 @@
-"use client";
-
-import React, { useState, useRef } from "react";
-import { Star, Camera, Search, Check, AlertCircle, MapPin, X } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Star, Camera, Search, Check, AlertCircle, MapPin, X, UserCheck, CheckCircle2 } from "lucide-react";
 import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchHeadName, getAuditorCandidates } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
+import { getEmployees, getBranches } from "@/app/actions/employee";
 
 interface NewAuditWizardProps {
   onSubmit: (audit: Audit) => void;
@@ -17,8 +16,61 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
   const [auditorInput, setAuditorInput] = useState<string>(formatAuditorName(auditorName));
   const [isCustomAuditor, setIsCustomAuditor] = useState<boolean>(false);
 
+  const [dbEmployees, setDbEmployees] = useState<any[]>([]);
+  const [dbBranches, setDbBranches] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadRealData() {
+      try {
+        const [emps, branches] = await Promise.all([getEmployees(), getBranches()]);
+        if (emps && emps.length > 0) setDbEmployees(emps);
+        if (branches && branches.length > 0) setDbBranches(branches);
+      } catch (err) {
+        console.error("Error loading real data for wizard:", err);
+      }
+    }
+    loadRealData();
+  }, []);
+
+  const activeBranches = dbBranches.length > 0 ? dbBranches : BRANCHES;
+
+  const auditorCandidates = useMemo(() => {
+    const source = dbEmployees.length > 0 ? dbEmployees : EMPLOYEES;
+    const list = source
+      .filter((e) => e.role === "หัวหน้าสาขา" || e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ") || e.role?.includes("หัวหน้า"))
+      .map((e) => {
+        const bName = e.currentBranch?.name || e.branchName || "";
+        return {
+          id: e.id,
+          name: `${e.firstName} ${e.lastName}`,
+          role: e.role,
+          branchId: e.branchId || e.currentBranchId,
+          branchName: bName,
+          displayName: `${e.firstName} ${e.lastName} — ${e.role}${bName ? ` (${bName})` : ""}`,
+        };
+      });
+
+    return list.sort((a, b) => {
+      const isAManager = a.role.includes("ผู้จัดการ");
+      const isBManager = b.role.includes("ผู้จัดการ");
+      if (isAManager && !isBManager) return -1;
+      if (!isAManager && isBManager) return 1;
+      return a.name.localeCompare(b.name, "th");
+    });
+  }, [dbEmployees]);
+
   function handleBranchChange(selectedId: string) {
     setBranchId(selectedId);
+    if (dbEmployees.length > 0) {
+      const match = dbEmployees.find(
+        (e) => (e.branchId === selectedId || e.currentBranchId === selectedId) && (e.role?.includes("ผู้จัดการ") || e.role === "หัวหน้าสาขา")
+      );
+      if (match) {
+        setAuditorInput(`${match.firstName} ${match.lastName} (${match.role})`);
+        setIsCustomAuditor(false);
+        return;
+      }
+    }
     const headName = getBranchHeadName(selectedId);
     if (headName) {
       setAuditorInput(headName);
@@ -134,7 +186,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
               className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
             >
               <option value="">-- เลือกสาขา --</option>
-              {BRANCHES.map((b) => (
+              {activeBranches.map((b: any) => (
                 <option key={b.id} value={b.id}>
                   {b.code} · {b.name}
                 </option>
@@ -142,10 +194,12 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-navy mb-1">
-              ชื่อผู้ตรวจประเมิน (เลือกจากหัวหน้าสาขา / ผู้จัดการสาขา)
+          {/* Auditor Selector Dropdown */}
+          <div className="space-y-2 pt-1">
+            <label className="block text-xs font-bold text-navy dark:text-slate-200 tracking-tight">
+              ชื่อผู้ตรวจประเมิน (เลือกจากผู้จัดการสาขา / หัวหน้าสาขา)
             </label>
+
             <select
               value={isCustomAuditor ? "__CUSTOM__" : auditorInput}
               onChange={(e) => {
@@ -157,44 +211,32 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                   setAuditorInput(e.target.value);
                 }
               }}
-              className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 text-xs font-semibold text-navy dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-audit-blue"
             >
-              <option value="">-- เลือกผู้ตรวจประเมิน --</option>
-              {branchId && (
-                <optgroup label={`📌 หัวหน้าสาขา / ผู้จัดการสาขา (${branch?.name})`}>
-                  {EMPLOYEES.filter(
-                    (e) => e.branchId === branchId && (e.role === "หัวหน้าสาขา" || e.role === "ผู้จัดการสาขา")
-                  ).map((e) => {
-                    const val = `${e.firstName} ${e.lastName} (${e.role})`;
-                    return (
-                      <option key={e.id} value={val}>
-                        {val}
-                      </option>
-                    );
-                  })}
-                </optgroup>
-              )}
-              <optgroup label="📋 หัวหน้าสาขา / ผู้จัดการสาขา ทุกสาขา">
-                {getAuditorCandidates().map((c) => {
-                  const val = `${c.name} (${c.role})`;
-                  return (
-                    <option key={c.id} value={val}>
-                      {c.displayName}
-                    </option>
-                  );
-                })}
-              </optgroup>
-              <option value="__CUSTOM__">✏️ + ระบุชื่อผู้ตรวจท่านอื่น...</option>
+              <option value="">-- เลือกจากรายชื่อผู้ตรวจประเมิน --</option>
+              {auditorCandidates.map((c) => {
+                const val = `${c.name} (${c.role})`;
+                return (
+                  <option key={c.id} value={val}>
+                    {c.displayName}
+                  </option>
+                );
+              })}
+              <option value="__CUSTOM__">+ ระบุชื่อผู้ตรวจท่านอื่น...</option>
             </select>
 
+            {/* Custom Auditor Input Field */}
             {isCustomAuditor && (
-              <input
-                type="text"
-                value={auditorInput}
-                onChange={(e) => setAuditorInput(e.target.value)}
-                placeholder="กรอกชื่อ-นามสกุล ผู้ตรวจประเมิน..."
-                className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue mt-2"
-              />
+              <div className="mt-2 pt-1">
+                <input
+                  type="text"
+                  value={auditorInput}
+                  onChange={(e) => setAuditorInput(e.target.value)}
+                  placeholder="กรอกชื่อ-นามสกุล และตำแหน่งผู้ตรวจประเมิน..."
+                  className="w-full bg-white dark:bg-slate-900 border border-audit-blue rounded-lg px-3.5 py-2.5 text-xs font-medium text-navy dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-audit-blue"
+                  autoFocus
+                />
+              </div>
             )}
           </div>
 

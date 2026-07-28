@@ -1,9 +1,8 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Store, MapPin, Users, Star, ChevronRight, Plus } from "lucide-react";
 import { BRANCHES, ZONES, EMPLOYEES, avgScore } from "@/lib/mock-data";
 import { Audit, Branch } from "@/lib/types/audit";
+import { getBranches, getEmployees } from "@/app/actions/employee";
 
 interface BranchDirectoryProps {
   audits?: Audit[];
@@ -11,6 +10,25 @@ interface BranchDirectoryProps {
 }
 
 export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDirectoryProps) {
+  const [dbBranches, setDbBranches] = useState<any[]>([]);
+  const [dbEmployees, setDbEmployees] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [bList, eList] = await Promise.all([getBranches(), getEmployees()]);
+        if (bList && bList.length > 0) setDbBranches(bList);
+        if (eList && eList.length > 0) setDbEmployees(eList);
+      } catch (err) {
+        console.error("Error loading branches for directory:", err);
+      }
+    }
+    loadData();
+  }, []);
+
+  const activeBranches = dbBranches.length > 0 ? dbBranches : BRANCHES;
+  const activeEmployees = dbEmployees.length > 0 ? dbEmployees : EMPLOYEES;
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -25,8 +43,8 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
 
       {/* Grid of Branch Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {BRANCHES.map((branch) => {
-          const staffCount = EMPLOYEES.filter((e) => e.branchId === branch.id).length;
+        {activeBranches.map((branch) => {
+          const staffCount = activeEmployees.filter((e) => e.branchId === branch.id || e.currentBranchId === branch.id).length;
           const branchAudits = audits.filter((a) => a.branchId === branch.id);
           const allItems = branchAudits.flatMap((a) => a.items);
           const score = avgScore(allItems);

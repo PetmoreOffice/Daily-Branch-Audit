@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server";
 import { CreateAuditSchema } from "@/lib/validations/audit";
-import { SEED_AUDITS, branchName } from "@/lib/mock-data";
+import { branchName } from "@/lib/mock-data";
 import { sendAuditDefectAlert } from "@/lib/email";
+import { getAudits, saveAudit } from "@/app/actions/audit";
 
 // GET /api/audits
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const branchId = searchParams.get("branchId");
+  try {
+    const { searchParams } = new URL(request.url);
+    const branchId = searchParams.get("branchId");
 
-  let result = SEED_AUDITS;
-  if (branchId) {
-    result = result.filter((a) => a.branchId === branchId);
+    let result = await getAudits();
+    if (branchId) {
+      result = result.filter((a) => a.branchId === branchId);
+    }
+
+    return NextResponse.json({ success: true, audits: result, count: result.length });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error?.message || "Failed to fetch audits" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ success: true, audits: result });
 }
 
 // POST /api/audits
@@ -27,7 +35,7 @@ export async function POST(request: Request) {
       ...validated,
     };
 
-    SEED_AUDITS.unshift(newAudit as any);
+    await saveAudit(newAudit as any);
 
     // Check for severe or failing defect items
     const failingItems = validated.items.filter((i) => i.status !== "ผ่าน");
