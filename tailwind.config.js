@@ -9,9 +9,6 @@ module.exports = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["var(--font-prompt)", "sans-serif"],
-      },
       colors: {
         navy: {
           DEFAULT: "#12294B",
