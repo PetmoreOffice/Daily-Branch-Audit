@@ -201,35 +201,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   return (
     <>
       {/* Animated gradient background */}
+      {/* Refined CSS */}
       <style>{`
-        @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 33%{transform:translateY(-20px) rotate(3deg)} 66%{transform:translateY(10px) rotate(-2deg)} }
-        @keyframes pulse-ring { 0%{transform:scale(0.9);opacity:0.7} 100%{transform:scale(1.3);opacity:0} }
         @keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-        .float-1{animation:float 7s ease-in-out infinite}
-        .float-2{animation:float 9s ease-in-out infinite 1s}
-        .float-3{animation:float 11s ease-in-out infinite 2s}
         .slide-up{animation:slide-up 0.5s ease forwards}
         .feature-transition{transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}
         .glass{backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
-        .input-glow:focus-within{box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
-        .btn-primary{background:linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%);transition:all 0.2s ease}
-        .btn-primary:hover{background:linear-gradient(135deg,#60a5fa 0%,#2563eb 100%);transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,130,246,0.4)}
+        .input-glow:focus-within{box-shadow:0 0 0 3px rgba(255,255,255,0.15)}
+        .btn-primary{background-color:#2563eb;transition:all 0.2s ease}
+        .btn-primary:hover{background-color:#1d4ed8;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.4)}
         .btn-primary:active{transform:translateY(0)}
-        .stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)}
         .nav-tab{transition:all 0.2s ease}
       `}</style>
 
-      <div className="min-h-screen flex overflow-hidden" style={{ background: "linear-gradient(135deg, #060c1a 0%, #0a1628 40%, #0d1f3c 70%, #060c1a 100%)" }}>
-
-        {/* === Floating ambient orbs === */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="float-1 absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full opacity-20" style={{ background: "radial-gradient(circle,#1e40af 0%,transparent 70%)" }} />
-          <div className="float-2 absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full opacity-15" style={{ background: "radial-gradient(circle,#1e3a5f 0%,transparent 70%)" }} />
-          <div className="float-3 absolute top-[40%] left-[40%] w-[300px] h-[300px] rounded-full opacity-10" style={{ background: "radial-gradient(circle,#0ea5e9 0%,transparent 70%)" }} />
-          {/* Grid overlay */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.8) 1px,transparent 1px)", backgroundSize: "50px 50px" }} />
-        </div>
+      <div className="min-h-screen flex bg-slate-900">
 
         {/* === LEFT PANEL === */}
         <div className="hidden lg:flex lg:w-[55%] flex-col justify-between p-10 xl:p-14 relative z-10">
@@ -237,31 +222,30 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Brand */}
           <div className="slide-up flex items-center gap-3">
             <div className="relative">
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#3b82f6,#1d4ed8)" }}>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-blue-600">
                 <ClipboardCheck className="w-6 h-6 text-white" />
               </div>
-              <div className="absolute -inset-1 rounded-2xl opacity-40 blur-sm" style={{ background: "linear-gradient(135deg,#3b82f6,#1d4ed8)" }} />
             </div>
             <div>
               <div className="text-white font-black text-lg tracking-tight leading-none">Daily Branch Audit</div>
-              <div className="text-blue-400/70 text-[11px] font-semibold mt-0.5">Enterprise Operations Suite</div>
+              <div className="text-slate-400 text-xs font-semibold mt-1">Enterprise Operations Suite</div>
             </div>
           </div>
 
           {/* Hero heading */}
           <div className="space-y-8 -mt-10">
             <div className="slide-up space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold text-blue-300" style={{ background: "rgba(59,130,246,0.08)", borderColor: "rgba(59,130,246,0.2)" }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold text-slate-300 border-slate-700 bg-slate-800/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 ระบบพร้อมใช้งาน 24/7
               </div>
               <h1 className="text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight">
                 บริหารงานสาขา<br />
-                <span style={{ background: "linear-gradient(135deg,#60a5fa,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                <span className="text-indigo-300">
                   ระดับองค์กร
                 </span>
               </h1>
-              <p className="text-white/50 text-base leading-relaxed max-w-md">
+              <p className="text-slate-400 text-base leading-relaxed max-w-md">
                 ยกระดับการตรวจประเมินคุณภาพสาขา ควบคุมมาตรฐาน และวิเคราะห์ผลได้แบบ Real-time
               </p>
             </div>
@@ -270,10 +254,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between text-[11px] text-white/25">
+          <div className="flex items-center justify-between text-xs text-slate-500">
             <span>© 2026 Daily Branch Audit. All rights reserved.</span>
-            <span className="flex items-center gap-1.5 text-emerald-400/60">
-              <ShieldCheck className="w-3 h-3" /> Secured by Supabase
+            <span className="flex items-center gap-1.5 text-emerald-500">
+              <ShieldCheck className="w-3.5 h-3.5" /> Secured by Supabase
             </span>
           </div>
         </div>
@@ -291,7 +275,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </div>
 
             {/* Form Card */}
-            <div className="glass rounded-3xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+            <div className="glass rounded-3xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
 
               {/* Tab header */}
               <div className="flex p-1.5 mx-5 mt-5 rounded-2xl gap-1" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -316,7 +300,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   <h2 className="text-xl font-black text-white tracking-tight">
                     {isSignUp ? "สร้างบัญชีใหม่" : "ยินดีต้อนรับ"}
                   </h2>
-                  <p className="text-xs text-white/35 mt-1">
+                  <p className="text-sm text-slate-300 mt-1.5">
                     {isSignUp ? "กรอกข้อมูลเพื่อสมัครเข้าใช้งานระบบ" : "กรอกบัญชีผู้ใช้งานเพื่อเข้าสู่ระบบบริหารสาขา"}
                   </p>
                 </div>
@@ -413,19 +397,19 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 )}
 
                 {/* Security note */}
-                <div className="flex items-center justify-center gap-2 text-[10px] text-white/20 pt-1">
-                  <ShieldCheck className="w-3 h-3" />
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
                   <span>ข้อมูลเข้ารหัสด้วย 256-bit SSL — Secured by Supabase Auth</span>
                 </div>
               </div>
             </div>
 
             {/* Bottom link */}
-            <p className="text-center text-xs text-white/25 mt-5">
+            <p className="text-center text-sm text-slate-400 mt-5">
               {isSignUp ? "มีบัญชีอยู่แล้ว? " : "ยังไม่มีบัญชี? "}
               <button
                 onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); setSuccessMsg(""); }}
-                className="text-blue-400/70 hover:text-blue-300 font-semibold transition underline-offset-2 hover:underline"
+                className="text-blue-300 hover:text-blue-200 font-semibold transition underline-offset-2 hover:underline"
               >
                 {isSignUp ? "เข้าสู่ระบบที่นี่" : "สมัครสมาชิกฟรี"}
               </button>
@@ -459,7 +443,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   <span>{resetError}</span>
                 </div>
                 {resetError.toLowerCase().includes("rate limit") && (
-                  <div className="text-[11px] text-amber-200/80 leading-relaxed pl-5">
+                  <div className="text-xs text-amber-200/80 leading-relaxed pl-5">
                     ข้อจำกัดอีเมลฟรีของ Supabase อนุญาตส่งเพียง 3 ฉบับ/ชม. ท่านสามารถเปลี่ยนไปตั้งค่า Custom SMTP ใน Supabase Dashboard หรือติดต่อแอดมินเพื่อรีเซ็ตรหัสผ่านได้ทันที
                   </div>
                 )}
@@ -478,8 +462,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   />
                 </div>
 
-                <div className="p-4 rounded-xl text-[11px] text-white/40 leading-relaxed space-y-1.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <div className="flex items-center gap-1.5 text-blue-400/80 font-semibold text-xs">
+                <div className="p-4 rounded-xl text-xs text-slate-400 leading-relaxed space-y-1.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="flex items-center gap-1.5 text-blue-300 font-semibold text-xs">
                     <Sparkles className="w-3.5 h-3.5" /> ทำงานอัตโนมัติ 100% ผ่าน Supabase Auth
                   </div>
                   <div>• ระบบส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ไปให้คุณทันที</div>
@@ -502,8 +486,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-white">ส่งลิงก์เรียบร้อยแล้ว!</h4>
-                  <p className="text-xs text-white/40 mt-1.5 leading-relaxed">
-                    ลิงก์ตั้งรหัสผ่านใหม่ส่งไปยัง <span className="text-blue-400 font-semibold">{resetEmail}</span> แล้ว<br />กรุณาตรวจสอบ inbox หรือ Spam folder
+                  <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
+                    ลิงก์ตั้งรหัสผ่านใหม่ส่งไปยัง <span className="text-blue-300 font-semibold">{resetEmail}</span> แล้ว<br />กรุณาตรวจสอบ inbox หรือ Spam folder
                   </p>
                 </div>
                 <button onClick={() => setShowForgotModal(false)} className="btn-primary w-full py-3 rounded-xl text-xs font-bold text-white mt-2">
