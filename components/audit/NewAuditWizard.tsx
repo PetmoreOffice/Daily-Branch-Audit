@@ -373,7 +373,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             {sec.items.map((item) => {
               const ans = answers[item.id] || emptyAnswer(item.id);
               const score = ans.score || 0;
-              const isDefect = ans.score !== undefined && score <= (item.minScore || 3);
+              const isDefect = answers[item.id]?.score !== undefined && score <= (item.minScore || 3);
 
               return (
                 <div key={item.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
