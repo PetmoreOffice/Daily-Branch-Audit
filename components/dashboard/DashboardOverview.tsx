@@ -301,7 +301,7 @@ export default function DashboardOverview({
         {/* Branch Performance Bar Chart */}
         <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
           <h3 className="text-sm font-bold text-navy mb-1">คะแนนเฉลี่ยแต่ละสาขา</h3>
-          <p className="text-[11px] text-slate-400 mb-3">(คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายสาขา)</p>
+          <p className="text-xs text-slate-400 mb-3">(คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายสาขา)</p>
           <div className="h-64">
              <ResponsiveContainer width="100%" height="100%">
                <BarChart
@@ -428,13 +428,13 @@ export default function DashboardOverview({
                       <div className="font-bold text-navy truncate">
                         {d.employee.firstName} {d.employee.lastName}
                       </div>
-                      <div className="text-[11px] text-slate-500 truncate">
+                      <div className="text-xs text-slate-500 truncate">
                         {d.employee.role} · {branchName(d.employee.branchId)}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[11px] text-slate-500">เฉลี่ย {d.avg.toFixed(1)}</span>
+                    <span className="text-xs text-slate-500">เฉลี่ย {d.avg.toFixed(1)}</span>
                     <span className="font-mono font-extrabold text-audit-blue bg-audit-tint px-2 py-0.5 rounded-sm text-xs border border-audit-blue">
                       {d.tagCount} ครั้ง
                     </span>
@@ -461,13 +461,13 @@ export default function DashboardOverview({
                       <div className="font-bold text-navy truncate">
                         {d.employee.firstName} {d.employee.lastName}
                       </div>
-                      <div className="text-[11px] text-slate-500 truncate">
+                      <div className="text-xs text-slate-500 truncate">
                         {d.employee.role} · {branchName(d.employee.branchId)}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[11px] text-slate-500">เฉลี่ย {d.avg.toFixed(1)}</span>
+                    <span className="text-xs text-slate-500">เฉลี่ย {d.avg.toFixed(1)}</span>
                     <span className="font-mono font-extrabold text-status-bad bg-status-badBg px-2 py-0.5 rounded-sm text-xs border border-status-bad">
                       {d.failCount} ครั้ง
                     </span>
@@ -493,7 +493,7 @@ export default function DashboardOverview({
                   </span>
                 </div>
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 text-white/90 text-[11px] font-semibold mb-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 text-white/90 text-xs font-semibold mb-1">
                     ประวัติการถูกตรวจประเมินและข้อคิดเห็นรายหัวข้อ
                   </div>
                   <h2 className="text-base font-black text-white">
@@ -565,14 +565,14 @@ export default function DashboardOverview({
                         {/* Entry Header */}
                         <div className="flex items-center justify-between text-xs mb-2 border-b border-slate-100 pb-2">
                           <div className="flex items-center gap-2 font-semibold text-slate-600">
-                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-bold">
+                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-bold">
                               📅 {thDate}
                             </span>
                             <span>{branchName(h.branchId)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span
-                              className={`px-2.5 py-0.5 rounded font-extrabold text-[11px] ${
+                              className={`px-2.5 py-0.5 rounded font-extrabold text-xs ${
                                 isFail ? "bg-rose-100 text-rose-800 border border-rose-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                               }`}
                             >
@@ -583,7 +583,7 @@ export default function DashboardOverview({
 
                         {/* Assessment Section & Item Title */}
                         <div className="mb-2.5">
-                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                             {details.sectionName}
                           </div>
                           <div className="text-sm font-bold text-navy">
@@ -601,7 +601,7 @@ export default function DashboardOverview({
                         >
                           <span className="text-base shrink-0 mt-0.5">{isFail ? "⚠️" : "💬"}</span>
                           <div className="flex-1">
-                            <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                            <div className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">
                               ข้อคิดเห็น / คอมเมนต์จากผู้ตรวจ ({h.auditor})
                             </div>
                             <p className="font-bold text-xs">{h.note || "ไม่มีคอมเมนต์เพิ่มเติม"}</p>

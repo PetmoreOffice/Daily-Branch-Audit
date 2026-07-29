@@ -70,7 +70,7 @@ export default function AppShell({
             </div>
             <div>
               <div className="font-extrabold text-sm tracking-tight leading-tight">Branch Audit</div>
-              <div className="text-[10px] text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
+              <div className="text-xs text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
             </div>
           </div>
           <button
@@ -100,7 +100,7 @@ export default function AppShell({
                   </div>
                   <div>
                     <div className="font-extrabold text-sm tracking-tight leading-tight">Branch Audit</div>
-                    <div className="text-[10px] text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
+                    <div className="text-xs text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
                   </div>
                 </div>
                 <button
@@ -140,7 +140,7 @@ export default function AppShell({
                   <UserCircle2 className="w-7 h-7 text-audit-sky shrink-0" />
                   <div className="truncate">
                     <div className="font-bold text-white truncate">{username || "ผู้ใช้งานระบบ"}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{ROLE_LABEL[role] || "เจ้าหน้าที่"}</div>
+                    <div className="text-xs text-slate-400 truncate">{ROLE_LABEL[role] || "เจ้าหน้าที่"}</div>
                   </div>
                 </div>
 
@@ -174,7 +174,7 @@ export default function AppShell({
             </div>
             <div>
               <div className="font-extrabold text-base tracking-tight leading-tight">Branch Audit</div>
-              <div className="text-[11px] text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
+              <div className="text-xs text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
             </div>
           </div>
 
@@ -206,7 +206,7 @@ export default function AppShell({
               <UserCircle2 className="w-7 h-7 text-audit-sky shrink-0" />
               <div className="truncate">
                 <div className="font-bold text-white truncate">{username || "ผู้ใช้งานระบบ"}</div>
-                <div className="text-[10px] text-slate-400 truncate">{ROLE_LABEL[role] || "เจ้าหน้าที่"}</div>
+                <div className="text-xs text-slate-400 truncate">{ROLE_LABEL[role] || "เจ้าหน้าที่"}</div>
               </div>
             </div>
 

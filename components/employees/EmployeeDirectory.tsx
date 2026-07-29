@@ -263,14 +263,14 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
             <div className="sticky top-6">
               <div className="bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden">
                 {/* Avatar Header */}
-              <div className="bg-gradient-to-br from-navy to-audit-blue p-5 flex items-center gap-4">
+              <div className="bg-navy p-5 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
                   <span className="text-white font-black text-xl">
                     {selectedEmp.firstName?.[0] || ""}{selectedEmp.lastName?.[0] || ""}
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold text-white/60 mb-0.5">{selectedEmp.code}</div>
+                  <div className="text-xs font-bold text-white/60 mb-0.5">{selectedEmp.code}</div>
                   <h2 className="text-base font-extrabold text-white leading-tight">
                     {selectedEmp.nickname && <span className="text-white/70">({selectedEmp.nickname}) </span>}{selectedEmp.firstName} {selectedEmp.lastName}
                   </h2>
@@ -288,11 +288,11 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                     <button onClick={() => {
                       setContactForm({ email: selectedEmp.email || "", phone: selectedEmp.phone || "" });
                       setIsEditingContact(true);
-                    }} className="text-audit-blue hover:underline font-semibold text-[10px]">แก้ไขข้อมูล</button>
+                    }} className="text-audit-blue hover:underline font-semibold text-xs">แก้ไขข้อมูล</button>
                   ) : (
                     <div className="space-x-2">
-                      <button onClick={() => setIsEditingContact(false)} className="text-slate-500 hover:underline font-semibold text-[10px]">ยกเลิก</button>
-                      <button onClick={handleUpdateContact} disabled={isSaving} className="text-audit-blue hover:underline font-bold text-[10px]">บันทึก</button>
+                      <button onClick={() => setIsEditingContact(false)} className="text-slate-500 hover:underline font-semibold text-xs">ยกเลิก</button>
+                      <button onClick={handleUpdateContact} disabled={isSaving} className="text-audit-blue hover:underline font-bold text-xs">บันทึก</button>
                     </div>
                   )}
                 </div>
@@ -339,7 +339,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
               <div className="pt-3 border-t border-audit-hairline">
                 <div className="flex items-center justify-between mb-1.5">
                   <h3 className="text-xs font-bold text-navy">ปรับ / เปลี่ยนตำแหน่ง</h3>
-                  <span className="text-[10px] font-semibold text-slate-400">ปัจจุบัน: {selectedEmp.role}</span>
+                  <span className="text-xs font-semibold text-slate-400">ปัจจุบัน: {selectedEmp.role}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -368,7 +368,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">สาขาปลายทาง</label>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">สาขาปลายทาง</label>
                       <select 
                         value={transferBranchId}
                         onChange={e => setTransferBranchId(e.target.value)}
@@ -380,7 +380,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">วันที่เริ่มต้น</label>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">วันที่เริ่มต้น</label>
                       <input 
                         type="date"
                         value={transferDate}
@@ -410,7 +410,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                     <div key={idx} className="relative pl-4 space-y-0.5">
                       <div className="absolute -left-[11px] top-1.5 w-3 h-3 rounded-full bg-audit-blue border-2 border-white"></div>
                       <div className="text-xs font-bold text-navy">{cleanBranchName(asg.branch?.name) || branchName(asg.branchId)}</div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-xs text-slate-500">
                         ตั้งแต่วันที่ {asg.startDate} {asg.endDate ? `ถึง ${asg.endDate}` : "(ปัจจุบัน)"}
                       </div>
                     </div>
@@ -428,7 +428,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
       {showAddModal && (
         <div className="fixed inset-0 bg-navy/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-audit-hairline">
-            <div className="p-5 border-b border-audit-hairline flex justify-between items-center bg-gradient-to-r from-navy to-audit-blue">
+            <div className="p-5 border-b border-audit-hairline flex justify-between items-center bg-navy">
               <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
                 <Users className="w-4 h-4" /> เพิ่มพนักงานใหม่
               </h2>

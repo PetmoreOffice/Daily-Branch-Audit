@@ -247,7 +247,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             <div className="w-8 h-8 rounded-full bg-audit-blue flex items-center justify-center text-white text-xs font-black shrink-0">1</div>
             <div className="flex-1">
               <div className="text-xs font-bold text-navy">ข้อมูลหลัก</div>
-              <div className="text-[10px] text-audit-slate">วันที่ & สาขา</div>
+              <div className="text-xs text-audit-slate">วันที่ & สาขา</div>
             </div>
           </div>
           <div className="h-0.5 w-12 bg-audit-hairline mx-2 rounded-full" />
@@ -255,7 +255,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-white text-xs font-black shrink-0">2</div>
             <div className="flex-1">
               <div className="text-xs font-bold text-slate-500">แบบประเมิน</div>
-              <div className="text-[10px] text-slate-400">ให้คะแนนรายหัวข้อ</div>
+              <div className="text-xs text-slate-400">ให้คะแนนรายหัวข้อ</div>
             </div>
           </div>
         </div>
@@ -455,7 +455,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                                 onClick={() => updateItem(item.id, {
                                   photosBefore: ans.photosBefore!.filter((_, j) => j !== i),
                                 })}
-                                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center leading-none shadow-sm hover:bg-red-600 transition"
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none shadow-sm hover:bg-red-600 transition"
                               >
                                 ×
                               </button>
@@ -608,7 +608,7 @@ function EmployeeSearch({ selectedIds, onChange, branchId }: { selectedIds: stri
           <>
             <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
             <div className="absolute z-20 w-full mt-1 bg-white border border-audit-hairline shadow-xl rounded-xl overflow-hidden max-h-56 overflow-y-auto">
-              <div className="px-3 py-1.5 bg-slate-50 border-b border-audit-hairline text-[10px] font-bold text-slate-400 uppercase flex justify-between items-center">
+              <div className="px-3 py-1.5 bg-slate-50 border-b border-audit-hairline text-xs font-bold text-slate-400 uppercase flex justify-between items-center">
                 <span>
                   {isWildcard
                     ? `รายชื่อพนักงานทั้งหมดในระบบ (${EMPLOYEES.length} คน)`
@@ -633,9 +633,9 @@ function EmployeeSearch({ selectedIds, onChange, branchId }: { selectedIds: stri
                       <div>
                         <span className="font-bold">{emp.firstName} {emp.lastName}</span>
                         {emp.nickname && <span className="text-slate-400 ml-1">({emp.nickname})</span>}
-                        <span className="text-slate-500 text-[11px] ml-2">· {emp.role}</span>
+                        <span className="text-slate-500 text-xs ml-2">· {emp.role}</span>
                         {(isWildcard || !branchId || emp.branchId !== branchId) && (
-                          <span className="text-[10px] font-semibold text-audit-blue bg-audit-tint px-1.5 py-0.5 rounded ml-2">
+                          <span className="text-xs font-semibold text-audit-blue bg-audit-tint px-1.5 py-0.5 rounded ml-2">
                             {bName}
                           </span>
                         )}
@@ -664,7 +664,7 @@ function EmployeeSearch({ selectedIds, onChange, branchId }: { selectedIds: stri
       {selectedIds.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-1">
           {selectedIds.map(id => (
-            <span key={id} className="inline-flex items-center gap-1 bg-audit-tint text-audit-blue text-[11px] font-bold px-2 py-1 rounded-md">
+            <span key={id} className="inline-flex items-center gap-1 bg-audit-tint text-audit-blue text-xs font-bold px-2 py-1 rounded-md">
               {getLabel(id)}
               <button
                 type="button"

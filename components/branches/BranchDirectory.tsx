@@ -64,7 +64,7 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-audit-blue">{branch.code}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${scoreColor.badge}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${scoreColor.badge}`}>
                       {hasScore ? `${score.toFixed(2)} / 5` : "ยังไม่ตรวจ"}
                     </span>
                   </div>
@@ -73,7 +73,7 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
                     <MapPin className="w-3.5 h-3.5 text-audit-slate shrink-0" /> {branch.province}
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-status-okBg text-status-ok border border-emerald-200 shrink-0">
+                <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-status-okBg text-status-ok border border-emerald-200 shrink-0">
                   เปิดใช้งาน
                 </span>
               </div>
@@ -87,7 +87,7 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
                       style={{ width: `${Math.min(100, (score / 5) * 100)}%`, background: scoreColor.bar }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                  <div className="flex justify-between text-xs text-slate-400 font-medium">
                     <span>คะแนนเฉลี่ย</span>
                     <span className="font-bold" style={{ color: scoreColor.bar }}>{scoreColor.label}</span>
                   </div>
@@ -96,14 +96,14 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
 
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                 <div className="bg-slate-50 p-2.5 rounded-lg text-center">
-                  <div className="text-[10px] text-slate-500 font-semibold flex items-center justify-center gap-1">
+                  <div className="text-xs text-slate-500 font-semibold flex items-center justify-center gap-1">
                     <Users className="w-3 h-3" /> พนักงานประจำ
                   </div>
                   <div className="text-sm font-extrabold text-navy mt-0.5">{staffCount} คน</div>
                 </div>
 
                 <div className="bg-slate-50 p-2.5 rounded-lg text-center">
-                  <div className="text-[10px] text-slate-500 font-semibold flex items-center justify-center gap-1">
+                  <div className="text-xs text-slate-500 font-semibold flex items-center justify-center gap-1">
                     <Star className="w-3 h-3 text-amber-500" /> ครั้งที่ตรวจ
                   </div>
                   <div className="text-sm font-extrabold text-navy mt-0.5">
