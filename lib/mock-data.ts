@@ -146,7 +146,7 @@ export const TEMPLATE: AuditTemplate = {
       name: "5. อื่นๆ",
       items: [
         { id: "I16", name: "5.2 การติดตามงาน การตรวจสอบ Checklist ประจำวัน", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
-        { id: "I17", name: "5.3 ไม่มีการร้องเรียนจากลูกค้า", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
+        { id: "I17", name: "5.3 ไม่มีการร้องเรียนจากลูกค้า", maxScore: 10, minScore: 6, requirePhoto: false, requireResponsible: true },
         { id: "I18", name: "5.4 การประสานงาน", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
         { id: "I19", name: "5.5 อื่นๆ", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
       ],

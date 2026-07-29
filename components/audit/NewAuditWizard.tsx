@@ -373,14 +373,14 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             {sec.items.map((item) => {
               const ans = answers[item.id] || emptyAnswer(item.id);
               const score = ans.score || 0;
-              const isDefect = ans.score !== undefined && score <= 3;
+              const isDefect = ans.score !== undefined && score <= (item.minScore || 3);
 
               return (
                 <div key={item.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="font-bold text-sm text-navy">{item.name}</div>
                     {/* Star Rating */}
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => updateItem(item.id, { score: 0 })}
@@ -393,7 +393,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                       >
                         0 คะแนน
                       </button>
-                      {[1, 2, 3, 4, 5].map((st) => (
+                      {Array.from({ length: item.maxScore || 5 }, (_, i) => i + 1).map((st) => (
                         <button
                           key={st}
                           type="button"
@@ -414,7 +414,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                         </button>
                       ))}
                       <span className="text-xs font-bold text-navy ml-2">
-                        {answers[item.id]?.score !== undefined ? `${score} / 5` : "ยังไม่ให้คะแนน"}
+                        {answers[item.id]?.score !== undefined ? `${score} / ${item.maxScore || 5}` : "ยังไม่ให้คะแนน"}
                       </span>
                     </div>
                   </div>
