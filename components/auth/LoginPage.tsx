@@ -241,7 +241,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               </div>
               <h1 className="text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight">
                 บริหารงานสาขา<br />
-                <span className="text-indigo-300">
+                <span className="text-white">
                   ระดับองค์กร
                 </span>
               </h1>
@@ -300,7 +300,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   <h2 className="text-xl font-black text-white tracking-tight">
                     {isSignUp ? "สร้างบัญชีใหม่" : "ยินดีต้อนรับ"}
                   </h2>
-                  <p className="text-sm text-slate-300 mt-1.5">
+                  <p className="text-sm text-white/80 mt-1.5">
                     {isSignUp ? "กรอกข้อมูลเพื่อสมัครเข้าใช้งานระบบ" : "กรอกบัญชีผู้ใช้งานเพื่อเข้าสู่ระบบบริหารสาขา"}
                   </p>
                 </div>
@@ -368,7 +368,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       <button
                         type="button"
                         onClick={() => { setShowForgotModal(true); setResetSent(false); setResetEmail(username.includes("@") && isAllowedCompanyEmail(username) ? username : ""); setResetError(""); }}
-                        className="text-blue-400/80 hover:text-blue-300 font-semibold transition"
+                        className="text-white hover:text-slate-200 font-semibold transition"
                       >
                         ลืมรหัสผ่าน?
                       </button>
@@ -409,7 +409,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               {isSignUp ? "มีบัญชีอยู่แล้ว? " : "ยังไม่มีบัญชี? "}
               <button
                 onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); setSuccessMsg(""); }}
-                className="text-blue-300 hover:text-blue-200 font-semibold transition underline-offset-2 hover:underline"
+                className="text-white hover:text-slate-200 font-semibold transition underline-offset-2 hover:underline"
               >
                 {isSignUp ? "เข้าสู่ระบบที่นี่" : "สมัครสมาชิกฟรี"}
               </button>
@@ -462,8 +462,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   />
                 </div>
 
-                <div className="p-4 rounded-xl text-xs text-slate-400 leading-relaxed space-y-1.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <div className="flex items-center gap-1.5 text-blue-300 font-semibold text-xs">
+                <div className="p-4 rounded-xl text-xs text-slate-300 leading-relaxed space-y-1.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="flex items-center gap-1.5 text-white font-semibold text-xs">
                     <Sparkles className="w-3.5 h-3.5" /> ทำงานอัตโนมัติ 100% ผ่าน Supabase Auth
                   </div>
                   <div>• ระบบส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ไปให้คุณทันที</div>
@@ -486,8 +486,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-white">ส่งลิงก์เรียบร้อยแล้ว!</h4>
-                  <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
-                    ลิงก์ตั้งรหัสผ่านใหม่ส่งไปยัง <span className="text-blue-300 font-semibold">{resetEmail}</span> แล้ว<br />กรุณาตรวจสอบ inbox หรือ Spam folder
+                  <p className="text-sm text-slate-300 mt-1.5 leading-relaxed">
+                    ลิงก์ตั้งรหัสผ่านใหม่ส่งไปยัง <span className="text-white font-semibold">{resetEmail}</span> แล้ว<br />กรุณาตรวจสอบ inbox หรือ Spam folder
                   </p>
                 </div>
                 <button onClick={() => setShowForgotModal(false)} className="btn-primary w-full py-3 rounded-xl text-xs font-bold text-white mt-2">
