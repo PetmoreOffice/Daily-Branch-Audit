@@ -59,7 +59,7 @@ export async function getBranches() {
   try {
     const branches = await prisma.branch.findMany({
       orderBy: {
-        name: "asc",
+        code: "asc",
       },
     });
     return branches.map((b) => ({

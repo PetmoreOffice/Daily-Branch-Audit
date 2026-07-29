@@ -26,7 +26,11 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
     loadData();
   }, []);
 
-  const activeBranches = dbBranches.length > 0 ? dbBranches : BRANCHES;
+  const activeBranches = React.useMemo(() => {
+    const list = dbBranches.length > 0 ? dbBranches : BRANCHES;
+    return [...list].sort((a, b) => (a.code || "").localeCompare(b.code || "", undefined, { numeric: true }));
+  }, [dbBranches]);
+
   const activeEmployees = dbEmployees.length > 0 ? dbEmployees : EMPLOYEES;
 
   return (
