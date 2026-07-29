@@ -39,11 +39,17 @@ async function getMockBranchId(dbBranchId: string): Promise<string> {
   return mockBranch ? mockBranch.id : dbBranch.id;
 }
 
+/** Module-level cache — avoids re-upserting all sections/items on every saveAudit call */
+let _templateCache: { templateId: string; itemIdMap: Record<string, string> } | null = null;
+
 /**
  * Ensures the audit template and all its items exist in the DB.
  * Returns a map of { templateId, itemIdMap: { mockItemId -> dbItemId } }
+ * Result is cached for the lifetime of the process.
  */
 async function ensureTemplateInDb() {
+  if (_templateCache) return _templateCache;
+
   // Upsert template
   let template = await prisma.auditTemplate.findFirst({ where: { name: TEMPLATE.name } });
   if (!template) {
@@ -87,7 +93,8 @@ async function ensureTemplateInDb() {
     }
   }
 
-  return { templateId: template.id, itemIdMap };
+  _templateCache = { templateId: template.id, itemIdMap };
+  return _templateCache;
 }
 
 // Save a new audit to the database

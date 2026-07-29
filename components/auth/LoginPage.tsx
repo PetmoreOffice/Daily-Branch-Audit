@@ -28,6 +28,19 @@ export function isAllowedCompanyEmail(emailStr: string): boolean {
   return ALLOWED_COMPANY_DOMAINS.some((domain) => clean.endsWith(domain));
 }
 
+export function inferRoleFromEmail(u: string): UserRole {
+  const s = u.toLowerCase().trim();
+  if (
+    s === ONLY_ADMIN_EMAIL.toLowerCase() ||
+    s === "mis_01" ||
+    AUTHORIZED_GMAIL_ACCOUNTS.some((e) => s === e.toLowerCase())
+  ) return "admin";
+  if (s.includes("exec") || s.includes("ceo")) return "executive";
+  if (s.includes("bm") || s.includes("branch")) return "branch_manager";
+  if (s.includes("area") || s.includes("am")) return "area_manager";
+  return "staff";
+}
+
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -59,21 +72,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
 
 
-  function inferRole(u: string): UserRole {
-    const s = u.toLowerCase().trim();
-    // Admin role for mis_01 and authorized Gmail accounts
-    if (
-      s === ONLY_ADMIN_EMAIL.toLowerCase() ||
-      s === "mis_01" ||
-      AUTHORIZED_GMAIL_ACCOUNTS.some((e) => s === e.toLowerCase())
-    ) {
-      return "admin";
-    }
-    if (s.includes("exec") || s.includes("ceo")) return "executive";
-    if (s.includes("bm") || s.includes("branch")) return "branch_manager";
-    if (s.includes("area") || s.includes("am")) return "area_manager";
-    return "staff";
-  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -103,14 +101,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       if (!error && data?.user) {
         setIsLoading(false);
         const roleFromDb = data.user.user_metadata?.role as UserRole;
-        const assignedRole = inferRole(cleanUser) === "admin" ? "admin" : (roleFromDb || inferRole(cleanUser));
+        const assignedRole = inferRoleFromEmail(cleanUser) === "admin" ? "admin" : (roleFromDb || inferRoleFromEmail(cleanUser));
         const displayName = data.user.user_metadata?.fullName || data.user.email || cleanUser;
         onLogin(assignedRole, displayName);
         return;
       }
 
       // 2. For designated Admin email (mis_01@newgenman.co.th / mis_01), authenticate seamlessly as Admin
-      if (inferRole(cleanUser) === "admin") {
+      if (inferRoleFromEmail(cleanUser) === "admin") {
         setIsLoading(false);
         onLogin("admin", "ผู้ดูแลระบบ (Admin)");
         return;
@@ -135,7 +133,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     if (signUpPassword !== confirmPassword) { setErrorMsg("รหัสผ่านไม่ตรงกัน"); return; }
     if (signUpPassword.length < 6) { setErrorMsg("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"); return; }
     setErrorMsg(""); setIsLoading(true);
-    const assignedRole: UserRole = inferRole(email) === "admin" || inferRole(signUpUsername) === "admin" ? "admin" : "staff";
+    const assignedRole: UserRole = inferRoleFromEmail(email) === "admin" || inferRoleFromEmail(signUpUsername) === "admin" ? "admin" : "staff";
 
     try {
       const { data, error } = await supabase.auth.signUp({

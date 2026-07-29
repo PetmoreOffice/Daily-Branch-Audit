@@ -7,14 +7,16 @@ import NewAuditWizard from "@/components/audit/NewAuditWizard";
 import AuditHistory from "@/components/audit/AuditHistory";
 import EmployeeDirectory from "@/components/employees/EmployeeDirectory";
 import BranchDirectory from "@/components/branches/BranchDirectory";
-import LoginPage from "@/components/auth/LoginPage";
+import LoginPage, { inferRoleFromEmail } from "@/components/auth/LoginPage";
 import { UserRole, Audit } from "@/lib/types/audit";
 import { syncEmployees, syncBranches } from "@/lib/mock-data";
 import { getEmployees, getBranches } from "@/app/actions/employee";
 import { saveAudit, getAudits } from "@/app/actions/audit";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true); // prevent flash
   const [role, setRole] = useState<UserRole>("area_manager");
   const [username, setUsername] = useState<string>("");
   const [page, setPage] = useState<string>("dashboard");
@@ -22,45 +24,81 @@ export default function Home() {
   const [auditsList, setAuditsList] = useState<Audit[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
-  // Load data & audits from DB on mount
   const loadAuditsFromDb = useCallback(async () => {
     try {
       const dbAudits = await getAudits();
-      if (Array.isArray(dbAudits)) {
-        setAuditsList(dbAudits);
-      }
+      if (Array.isArray(dbAudits)) setAuditsList(dbAudits);
     } catch (err) {
       console.error("Failed to load audits from DB:", err);
     }
   }, []);
 
-  useEffect(() => {
-    async function initDbSync() {
-      try {
-        const [emps, branches, dbAudits] = await Promise.all([getEmployees(), getBranches(), getAudits()]);
-        if (emps && emps.length > 0) syncEmployees(emps);
-        if (branches && branches.length > 0) syncBranches(branches);
-        if (Array.isArray(dbAudits)) setAuditsList(dbAudits);
-      } catch (err) {
-        console.error("Error syncing DB data on mount:", err);
-      }
+  const syncStaticData = useCallback(async () => {
+    try {
+      const [emps, branches] = await Promise.all([getEmployees(), getBranches()]);
+      if (emps && emps.length > 0) syncEmployees(emps);
+      if (branches && branches.length > 0) syncBranches(branches);
+    } catch (err) {
+      console.error("Error syncing static data:", err);
     }
-    initDbSync();
-
-    // Auto-sync audits from DB every 10 seconds across all active devices
-    const interval = setInterval(async () => {
-      try {
-        const dbAudits = await getAudits();
-        if (Array.isArray(dbAudits)) {
-          setAuditsList(dbAudits);
-        }
-      } catch (err) {
-        // Silent background sync retry
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, []);
+
+  // ── #1 Session Persistence: check for existing Supabase session on mount ──
+  useEffect(() => {
+    let realtimeSub: ReturnType<typeof supabase.channel> | null = null;
+
+    async function initSession() {
+      // Check existing session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const userEmail = session.user.email || "";
+        const displayName = session.user.user_metadata?.fullName || userEmail;
+        const assignedRole = (session.user.user_metadata?.role as UserRole) || inferRoleFromEmail(userEmail);
+        setRole(assignedRole);
+        setUsername(displayName);
+        setIsAuthenticated(true);
+
+        // Load data now that we know we're authenticated
+        await Promise.all([syncStaticData(), loadAuditsFromDb()]);
+
+        // ── #2 Replace polling with Supabase Realtime ──
+        realtimeSub = supabase
+          .channel("audits-realtime")
+          .on("postgres_changes", { event: "*", schema: "public", table: "Audit" }, () => {
+            loadAuditsFromDb();
+          })
+          .subscribe();
+      }
+
+      setAuthLoading(false);
+    }
+
+    initSession();
+
+    // Listen for future auth state changes (login/logout from other tabs)
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const userEmail = session.user.email || "";
+        const displayName = session.user.user_metadata?.fullName || userEmail;
+        const assignedRole = (session.user.user_metadata?.role as UserRole) || inferRoleFromEmail(userEmail);
+        setRole(assignedRole);
+        setUsername(displayName);
+        setIsAuthenticated(true);
+        await Promise.all([syncStaticData(), loadAuditsFromDb()]);
+      } else if (event === "SIGNED_OUT") {
+        setIsAuthenticated(false);
+        setUsername("");
+        setAuditsList([]);
+        setPage("dashboard");
+      }
+    });
+
+    return () => {
+      authSub.unsubscribe();
+      if (realtimeSub) supabase.removeChannel(realtimeSub);
+    };
+  }, [loadAuditsFromDb, syncStaticData]);
 
   function handleDrillBranch(_branchId: string) {
     setPage("audit_history");
@@ -72,18 +110,33 @@ export default function Home() {
   }
 
   async function handleAuditSubmit(newAudit: Audit) {
-    // Add to local state immediately for instant UI feedback
+    // Optimistic update for instant UI feedback
     setAuditsList((prev) => [newAudit, ...prev]);
     setPage("audit_history");
 
-    // Save to DB in background
     try {
       await saveAudit(newAudit);
-      // Reload from DB to get canonical data (handles ID generation etc.)
       await loadAuditsFromDb();
     } catch (err) {
       console.warn("Could not persist audit to DB — kept in local memory:", err);
     }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    // onAuthStateChange will handle resetting state
+  }
+
+  // Prevent login flash while checking session
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-audit-blue border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-400 text-sm">กำลังตรวจสอบสถานะการเข้าสู่ระบบ...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -93,6 +146,7 @@ export default function Home() {
           setRole(selectedRole);
           setUsername(user);
           setIsAuthenticated(true);
+          Promise.all([syncStaticData(), loadAuditsFromDb()]);
         }}
       />
     );
@@ -107,12 +161,7 @@ export default function Home() {
       dark={dark}
       setDark={setDark}
       username={username}
-      onLogout={() => {
-        setIsAuthenticated(false);
-        setUsername("");
-        setAuditsList([]);
-        setPage("dashboard");
-      }}
+      onLogout={handleLogout}
     >
       {page === "dashboard" && (
         <DashboardOverview
@@ -134,3 +183,4 @@ export default function Home() {
     </AppShell>
   );
 }
+
