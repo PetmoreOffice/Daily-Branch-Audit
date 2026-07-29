@@ -1,12 +1,97 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Star, Camera, Search, Check, AlertCircle, MapPin, X, UserCheck, CheckCircle2 } from "lucide-react";
-import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchHeadName, getAuditorCandidates } from "@/lib/mock-data";
+import { Star, Camera, Search, Check, AlertCircle, MapPin, X, UserCheck, CheckCircle2, CalendarDays } from "lucide-react";
+import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchHeadName, getAuditorCandidates, formatDateDDMMYYYY } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 import { getEmployees, getBranches } from "@/app/actions/employee";
 
 interface NewAuditWizardProps {
   onSubmit: (audit: Audit) => void;
   auditorName?: string;
+}
+
+function DateInputDDMMYYYY({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (isoDate: string) => void;
+}) {
+  const [textVal, setTextVal] = useState(() => {
+    if (!value || !value.includes("-")) return value || "";
+    const [y, m, d] = value.split("-");
+    if (y && m && d && y.length === 4) {
+      return `${d}/${m}/${y}`;
+    }
+    return value;
+  });
+
+  useEffect(() => {
+    if (value && value.includes("-")) {
+      const [y, m, d] = value.split("-");
+      if (y && m && d && y.length === 4) {
+        setTextVal(`${d}/${m}/${y}`);
+      }
+    } else {
+      setTextVal(value || "");
+    }
+  }, [value]);
+
+  function handleTextChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let val = e.target.value.replace(/[^\d/]/g, "");
+    if (!val.includes("/") && val.length > 2) {
+      if (val.length <= 4) {
+        val = `${val.slice(0, 2)}/${val.slice(2)}`;
+      } else {
+        val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4, 8)}`;
+      }
+    }
+    setTextVal(val);
+
+    const clean = val.replace(/[^\d/]/g, "");
+    const parts = clean.split("/");
+    if (parts.length === 3) {
+      const [d, m, y] = parts;
+      if (d.length === 2 && m.length === 2 && y.length === 4) {
+        const numD = parseInt(d, 10);
+        const numM = parseInt(m, 10);
+        const numY = parseInt(y, 10);
+        if (numD >= 1 && numD <= 31 && numM >= 1 && numM <= 12 && numY >= 2000 && numY <= 2100) {
+          onChange(`${y}-${m}-${d}`);
+        }
+      }
+    }
+  }
+
+  return (
+    <div className="relative flex items-center">
+      <input
+        type="text"
+        placeholder="DD/MM/YYYY (เช่น 29/07/2026)"
+        value={textVal}
+        onChange={handleTextChange}
+        maxLength={10}
+        className="w-full bg-white border border-audit-hairline rounded-lg pl-3 pr-10 py-2 text-sm text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-audit-blue"
+      />
+      <div className="absolute right-2 top-1.5 flex items-center">
+        <label
+          title="เลือกจากปฏิทิน"
+          className="p-1.5 hover:bg-slate-100 rounded-md cursor-pointer text-audit-slate hover:text-audit-blue transition relative flex items-center justify-center"
+        >
+          <CalendarDays className="w-4 h-4" />
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => {
+              if (e.target.value) {
+                onChange(e.target.value);
+              }
+            }}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          />
+        </label>
+      </div>
+    </div>
+  );
 }
 
 export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizardProps) {
@@ -177,13 +262,8 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
         <div className="gridgeist-card p-6 space-y-4 max-w-3xl">
           <div>
-            <label className="block text-xs font-bold text-navy mb-1">วันที่ทำการตรวจประเมิน</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-white border border-audit-hairline rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
-            />
+            <label className="block text-xs font-bold text-navy mb-1">วันที่ทำการตรวจประเมิน (DD/MM/YYYY)</label>
+            <DateInputDDMMYYYY value={date} onChange={(newIso) => setDate(newIso)} />
           </div>
 
           <div>

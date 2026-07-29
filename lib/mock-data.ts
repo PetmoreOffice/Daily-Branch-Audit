@@ -355,3 +355,16 @@ export function formatAuditorName(auditorStr?: string | null, branchId?: string)
 
   return s;
 }
+
+export function formatDateDDMMYYYY(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    if (y.length === 4) {
+      return `${d}/${m}/${y}`;
+    }
+  }
+  return dateStr;
+}

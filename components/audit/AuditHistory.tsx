@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Search, CalendarDays, Filter, Eye, ChevronRight, X, UserCheck, ClipboardX, BarChart2, Camera, FileText } from "lucide-react";
 import { Audit } from "@/lib/types/audit";
-import { branchName, itemName, employeeName, avgScore, statusFromScore, ALL_ITEMS, formatAuditorName } from "@/lib/mock-data";
+import { branchName, itemName, employeeName, avgScore, statusFromScore, ALL_ITEMS, formatAuditorName, formatDateDDMMYYYY } from "@/lib/mock-data";
 
 interface AuditHistoryProps {
   audits: Audit[];
@@ -131,7 +131,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                   return (
                     <tr key={a.id} className="hover:bg-slate-50 transition group">
                       <td className="p-3.5 font-bold text-audit-blue">{a.id}</td>
-                      <td className="p-3.5 font-medium text-slate-600">{a.date}</td>
+                      <td className="p-3.5 font-medium text-slate-600">{formatDateDDMMYYYY(a.date)}</td>
                       <td className="p-3.5 font-bold text-navy">{branchName(a.branchId)}</td>
                       <td className="p-3.5 font-medium text-slate-600 max-w-[160px] truncate">{formatAuditorName(a.auditor, a.branchId)}</td>
                       <td className="p-3.5">
@@ -177,7 +177,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                 <span className="text-xs font-bold text-audit-blue">{selectedAudit.id}</span>
                 <h2 className="text-xl font-extrabold text-navy">{branchName(selectedAudit.branchId)}</h2>
                 <p className="text-xs text-audit-slate">
-                  ตรวจโดย {formatAuditorName(selectedAudit.auditor, selectedAudit.branchId)} · วันที่ {selectedAudit.date}
+                  ตรวจโดย {formatAuditorName(selectedAudit.auditor, selectedAudit.branchId)} · วันที่ {formatDateDDMMYYYY(selectedAudit.date)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
