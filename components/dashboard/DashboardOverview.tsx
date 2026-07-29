@@ -14,7 +14,7 @@ import KPICard from "./KPICard";
 import { Audit, Branch, Employee, AuditItemResult } from "@/lib/types/audit";
 import {
   BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, avgScore, branchName,
-  employeesAtBranchOnDate
+  employeesAtBranchOnDate, isSameBranch
 } from "@/lib/mock-data";
 
 interface DashboardOverviewProps {
@@ -49,7 +49,7 @@ export default function DashboardOverview({
   const overallAvg = avgScore(allItemScores);
 
   const branchAverages = BRANCHES.map((b) => {
-    const items = filtered.filter((a) => a.branchId === b.id).flatMap((a) => a.items);
+    const items = filtered.filter((a) => isSameBranch(a.branchId, b)).flatMap((a) => a.items);
     return { branch: b, avg: avgScore(items) };
   }).filter((x) => x.avg > 0);
   branchAverages.sort((a, b) => b.avg - a.avg);

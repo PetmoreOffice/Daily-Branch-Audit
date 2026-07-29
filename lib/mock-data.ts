@@ -226,13 +226,37 @@ export function avgScore(items: AuditItemResult[]): number {
   return max ? (got / max) * 5 : 0;
 }
 
+export function isSameBranch(id1?: string | null, target?: any): boolean {
+  if (!id1 || !target) return false;
+  if (typeof target === "string") {
+    if (id1 === target) return true;
+    const b1 = BRANCHES.find((b) => b.id === id1 || b.code === id1);
+    const b2 = BRANCHES.find((b) => b.id === target || b.code === target);
+    if (b1 && b2 && b1.code === b2.code) return true;
+    return false;
+  }
+  const bId = target.id;
+  const bCode = target.code;
+  if (id1 === bId || id1 === bCode) return true;
+  if (bCode === "NKR-01" && id1 === "B01") return true;
+  if (bCode === "NKR-02" && id1 === "B02") return true;
+  if (bCode === "NKR-03" && id1 === "B03") return true;
+  if (bCode === "NKR-04" && id1 === "B04") return true;
+  return false;
+}
+
 export function cleanBranchName(name?: string | null): string {
   if (!name) return "";
   return name.replace(/สาขาหลังเดอะมอลโคราช|หลังเดอะมอลโคราช/g, "สาขาหลังเดอะมอลล์");
 }
 
-export function branchName(id: string): string {
-  const found = BRANCHES.find((b) => b.id === id)?.name || id;
+export function branchName(id: string, dbBranches?: any[]): string {
+  if (!id) return "";
+  if (dbBranches && dbBranches.length > 0) {
+    const foundDb = dbBranches.find((b) => b.id === id || b.code === id);
+    if (foundDb) return cleanBranchName(foundDb.name);
+  }
+  const found = BRANCHES.find((b) => b.id === id || b.code === id)?.name || id;
   return cleanBranchName(found);
 }
 

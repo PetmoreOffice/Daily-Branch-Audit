@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Store, MapPin, Users, Star, ChevronRight, Plus } from "lucide-react";
-import { BRANCHES, ZONES, EMPLOYEES, avgScore } from "@/lib/mock-data";
+import { BRANCHES, ZONES, EMPLOYEES, avgScore, isSameBranch } from "@/lib/mock-data";
 import { Audit, Branch } from "@/lib/types/audit";
 import { getBranches, getEmployees } from "@/app/actions/employee";
 
@@ -44,8 +44,8 @@ export default function BranchDirectory({ audits = [], onDrillBranch }: BranchDi
       {/* Grid of Branch Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {activeBranches.map((branch) => {
-          const staffCount = activeEmployees.filter((e) => e.branchId === branch.id || e.currentBranchId === branch.id).length;
-          const branchAudits = audits.filter((a) => a.branchId === branch.id);
+          const staffCount = activeEmployees.filter((e) => isSameBranch(e.branchId, branch) || isSameBranch(e.currentBranchId, branch)).length;
+          const branchAudits = audits.filter((a) => isSameBranch(a.branchId, branch));
           const allItems = branchAudits.flatMap((a) => a.items);
           const score = avgScore(allItems);
           const hasScore = score > 0;
