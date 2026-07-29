@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  AreaChart, Area
 } from "recharts";
 import {
   ClipboardCheck, CalendarDays, Star, TrendingUp, TrendingDown,
@@ -253,17 +254,23 @@ export default function DashboardOverview({
           <h3 className="text-sm font-bold text-navy mb-3">คะแนนเฉลี่ยรายเดือน</h3>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyTrend}>
-                <CartesianGrid stroke="#f1f5f9" vertical={false} />
+              <AreaChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dy={10} />
-                <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dx={-10} />
+                <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dx={10} />
                 <Tooltip
                   cursor={{ stroke: "#cbd5e1", strokeWidth: 1, strokeDasharray: "4 4" }}
-                  contentStyle={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", fontSize: "12px", color: "#0f172a", padding: "8px 12px" }}
-                  itemStyle={{ color: "#0f172a", fontWeight: 600 }}
+                  contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
+                  itemStyle={{ color: "#0f172a", fontWeight: 700 }}
                 />
-                <Line type="monotone" dataKey="score" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 4, fill: "white", stroke: "#2563eb", strokeWidth: 2 }} activeDot={{ r: 6, fill: "#2563eb", stroke: "white" }} />
-              </LineChart>
+                <Area type="monotone" dataKey="score" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" activeDot={{ r: 6, fill: "#2563eb", stroke: "white", strokeWidth: 2 }} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -274,16 +281,16 @@ export default function DashboardOverview({
           <div className="h-60">
              <ResponsiveContainer width="100%" height="100%">
                <PieChart>
-                 <Pie data={defectPie} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80} paddingAngle={3}>
+                 <Pie data={defectPie} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} paddingAngle={5} stroke="none" cornerRadius={4}>
                    {defectPie.map((_, i) => (
-                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="transparent" />
+                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                    ))}
                  </Pie>
                  <Tooltip
-                   contentStyle={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", fontSize: "12px", color: "#0f172a", padding: "8px 12px" }}
-                   itemStyle={{ color: "#0f172a", fontWeight: 600 }}
+                   contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
+                   itemStyle={{ color: "#0f172a", fontWeight: 700 }}
                  />
-                 <Legend wrapperStyle={{ fontSize: "12px", fill: "#64748b" }} />
+                 <Legend wrapperStyle={{ fontSize: "12px", fill: "#64748b" }} iconType="circle" />
                </PieChart>
              </ResponsiveContainer>
           </div>
@@ -299,20 +306,21 @@ export default function DashboardOverview({
              <ResponsiveContainer width="100%" height="100%">
                <BarChart
                  data={byBranchChart}
+                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                  onClick={(e) => {
                    const p = e?.activePayload?.[0]?.payload;
                    if (p) onDrillBranch(p.branchId);
                  }}
                >
-                 <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={10} />
-                 <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={-10} />
+                 <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={10} />
                  <Tooltip
-                   cursor={{ fill: "rgba(37, 99, 235, 0.06)", rx: 4 }}
-                   contentStyle={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", fontSize: "12px", color: "#0f172a", padding: "8px 12px" }}
-                   itemStyle={{ color: "#0f172a", fontWeight: 600 }}
+                   cursor={{ fill: "rgba(37, 99, 235, 0.05)", rx: 6 }}
+                   contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
+                   itemStyle={{ color: "#0f172a", fontWeight: 700 }}
                  />
-                 <Bar dataKey="score" fill="#2563eb" radius={[4, 4, 0, 0]} cursor="pointer" />
+                 <Bar dataKey="score" fill="#2563eb" radius={[6, 6, 0, 0]} cursor="pointer" />
                </BarChart>
              </ResponsiveContainer>
           </div>
@@ -323,16 +331,16 @@ export default function DashboardOverview({
           <h3 className="text-sm font-bold text-navy mb-4">คะแนนเฉลี่ยตามหมวดประเมิน</h3>
           <div className="h-64">
              <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={bySectionChart} layout="vertical" margin={{ left: 15 }}>
-                 <CartesianGrid stroke="#f1f5f9" horizontal={false} />
+               <BarChart data={bySectionChart} layout="vertical" margin={{ left: 15, right: 10, top: 10, bottom: 0 }}>
+                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                  <XAxis type="number" domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={5} />
                  <YAxis type="category" dataKey="name" width={90} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={-10} />
                  <Tooltip
-                   cursor={{ fill: "rgba(37, 99, 235, 0.06)", rx: 4 }}
-                   contentStyle={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", fontSize: "12px", color: "#0f172a", padding: "8px 12px" }}
-                   itemStyle={{ color: "#0f172a", fontWeight: 600 }}
+                   cursor={{ fill: "rgba(59, 130, 246, 0.05)", rx: 6 }}
+                   contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
+                   itemStyle={{ color: "#0f172a", fontWeight: 700 }}
                  />
-                 <Bar dataKey="score" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                 <Bar dataKey="score" fill="#3b82f6" radius={[0, 6, 6, 0]} />
                </BarChart>
              </ResponsiveContainer>
           </div>
