@@ -4,12 +4,28 @@ import { prisma } from "@/lib/prisma";
 import { Audit } from "@/lib/types/audit";
 import { TEMPLATE, BRANCHES } from "@/lib/mock-data";
 
-/** Map mock branchId (B01) -> DB branchId (cuid) */
-async function getBranchDbId(mockBranchId: string): Promise<string | null> {
-  const mockBranch = BRANCHES.find((b) => b.id === mockBranchId);
-  if (!mockBranch) return null;
-  const dbBranch = await prisma.branch.findUnique({ where: { code: mockBranch.code } });
-  return dbBranch?.id || null;
+/** Resolve any branch ID format (cuid, code like NKR-01, or mock ID B01) -> DB branchId */
+async function getBranchDbId(inputBranchId: string): Promise<string | null> {
+  if (!inputBranchId) return null;
+
+  // 1. Directly check by DB CUID
+  let dbBranch = await prisma.branch.findUnique({ where: { id: inputBranchId } });
+  if (dbBranch) return dbBranch.id;
+
+  // 2. Check by branch code (e.g. NKR-01)
+  dbBranch = await prisma.branch.findUnique({ where: { code: inputBranchId } });
+  if (dbBranch) return dbBranch.id;
+
+  // 3. Check by mock branch ID (B01, etc.)
+  const mockBranch = BRANCHES.find((b) => b.id === inputBranchId || b.code === inputBranchId);
+  if (mockBranch) {
+    dbBranch = await prisma.branch.findUnique({ where: { code: mockBranch.code } });
+    if (dbBranch) return dbBranch.id;
+  }
+
+  // 4. Fallback to first branch in DB
+  const firstBranch = await prisma.branch.findFirst();
+  return firstBranch?.id || null;
 }
 
 /** Map DB branchId (cuid) -> mock branchId (B01) */
@@ -17,7 +33,7 @@ async function getMockBranchId(dbBranchId: string): Promise<string> {
   const dbBranch = await prisma.branch.findUnique({ where: { id: dbBranchId } });
   if (!dbBranch) return dbBranchId;
   const mockBranch = BRANCHES.find((b) => b.code === dbBranch.code);
-  return mockBranch?.id || dbBranchId;
+  return mockBranch ? mockBranch.id : dbBranch.id;
 }
 
 /**

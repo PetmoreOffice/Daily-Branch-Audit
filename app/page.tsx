@@ -45,6 +45,20 @@ export default function Home() {
       }
     }
     initDbSync();
+
+    // Auto-sync audits from DB every 10 seconds across all active devices
+    const interval = setInterval(async () => {
+      try {
+        const dbAudits = await getAudits();
+        if (dbAudits && dbAudits.length > 0) {
+          setAuditsList(dbAudits);
+        }
+      } catch (err) {
+        // Silent background sync retry
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   function handleDrillBranch(_branchId: string) {
