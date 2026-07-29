@@ -119,10 +119,10 @@ export const TEMPLATE: AuditTemplate = {
       name: "2. การบริการ (สุ่มตรวจกล้อง และหน้าร้านจริง)",
       items: [
         { id: "I04", name: "2.1 ยิ้มแย้มแจ่มใส กล่าวทักท้ายลูกค้า กล่าวขอบคุณลูกค้า", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
-        { id: "I05", name: "2.2 สอบถามสมาชิก", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
+        { id: "I05", name: "2.2 สอบถามสมาชิก/สอบถามชื่อน้องหมา น้องแมว", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
         { id: "I06", name: "2.3 แนะนำโปรโมชั่นที่เหมาะสมให้กับลูกค้า", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
-        { id: "I07", name: "2.4 รับเงิน แจ้งเงินทอน และแจ้งส่วนลด", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
-        { id: "I08", name: "2.5 ทวนรายการสินค้าที่ลูกค้าซื้อ", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
+        { id: "I07", name: "2.4 รับเงิน แจ้งเงินทอน และแจ้งส่วนลด/นำส่งลูกค้าที่แคชเชียร์", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
+        { id: "I08", name: "2.5 ทวนรายการสินค้าที่ลูกค้าซื้อ/นำส่งลูกค้าที่รถ", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
         { id: "I09", name: "2.6 อื่นๆ", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
       ],
     },
@@ -131,7 +131,7 @@ export const TEMPLATE: AuditTemplate = {
       items: [
         { id: "I10", name: "3.1 ไม่ FIFO สินค้า ตรวจพบสินค้า EXP ระหว่างขาย ไม่ได้ดำเนินการแจ้งลง app", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
         { id: "I11", name: "3.4 ป้ายราคาหลัก ป้ายสื่อโปรโมชั่น ป้ายราคาไม่ตรง", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
-        { id: "I12", name: "3.5 การนับสินค้าควบคุม (กลุ่มยา)", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
+        { id: "I12", name: "3.5 การนับสินค้าควบคุม (กลุ่มยา)/เพิ่มการเติมสินค้า Top 1-50 ไม่ให้ขาด และไม่เติมสินค้าปะปน", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
         { id: "I13", name: "3.6 อื่นๆ", maxScore: 5, minScore: 3, requirePhoto: false, requireResponsible: true },
       ],
     },
