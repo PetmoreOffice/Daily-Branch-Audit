@@ -15,11 +15,16 @@ interface LoginPageProps {
 }
 
 export const ONLY_ADMIN_EMAIL = "mis_01@newgenman.co.th";
-export const ADMIN_EMAILS: string[] = [ONLY_ADMIN_EMAIL, "mis_01"];
+export const AUTHORIZED_GMAIL_ACCOUNTS: string[] = [
+  "llltalalalll555@gmail.com",
+  "firstman@gmail.com",
+];
+export const ADMIN_EMAILS: string[] = [ONLY_ADMIN_EMAIL, "mis_01", ...AUTHORIZED_GMAIL_ACCOUNTS];
 export const ALLOWED_COMPANY_DOMAINS: string[] = ["@newgenman.co.th", "@petmoregroups.com"];
 
 export function isAllowedCompanyEmail(emailStr: string): boolean {
   const clean = emailStr.toLowerCase().trim();
+  if (AUTHORIZED_GMAIL_ACCOUNTS.some((e) => clean === e.toLowerCase())) return true;
   return ALLOWED_COMPANY_DOMAINS.some((domain) => clean.endsWith(domain));
 }
 
@@ -56,8 +61,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   function inferRole(u: string): UserRole {
     const s = u.toLowerCase().trim();
-    // Strictly ONLY mis_01@newgenman.co.th or username mis_01 gets Admin
-    if (s === ONLY_ADMIN_EMAIL.toLowerCase() || s === "mis_01") return "admin";
+    // Admin role for mis_01 and authorized Gmail accounts
+    if (
+      s === ONLY_ADMIN_EMAIL.toLowerCase() ||
+      s === "mis_01" ||
+      AUTHORIZED_GMAIL_ACCOUNTS.some((e) => s === e.toLowerCase())
+    ) {
+      return "admin";
+    }
     if (s.includes("exec") || s.includes("ceo")) return "executive";
     if (s.includes("bm") || s.includes("branch")) return "branch_manager";
     if (s.includes("area") || s.includes("am")) return "area_manager";
