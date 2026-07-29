@@ -226,12 +226,19 @@ export function avgScore(items: AuditItemResult[]): number {
   return max ? (got / max) * 5 : 0;
 }
 
+export let GLOBAL_DB_BRANCHES: any[] = [];
+export function syncBranches(branches: any[]) {
+  if (Array.isArray(branches) && branches.length > 0) {
+    GLOBAL_DB_BRANCHES = branches;
+  }
+}
+
 export function isSameBranch(id1?: string | null, target?: any): boolean {
   if (!id1 || !target) return false;
   if (typeof target === "string") {
     if (id1 === target) return true;
-    const b1 = BRANCHES.find((b) => b.id === id1 || b.code === id1);
-    const b2 = BRANCHES.find((b) => b.id === target || b.code === target);
+    const b1 = BRANCHES.find((b) => b.id === id1 || b.code === id1) || GLOBAL_DB_BRANCHES.find((b) => b.id === id1 || b.code === id1);
+    const b2 = BRANCHES.find((b) => b.id === target || b.code === target) || GLOBAL_DB_BRANCHES.find((b) => b.id === target || b.code === target);
     if (b1 && b2 && b1.code === b2.code) return true;
     return false;
   }
@@ -252,8 +259,9 @@ export function cleanBranchName(name?: string | null): string {
 
 export function branchName(id: string, dbBranches?: any[]): string {
   if (!id) return "";
-  if (dbBranches && dbBranches.length > 0) {
-    const foundDb = dbBranches.find((b) => b.id === id || b.code === id);
+  const allDb = (dbBranches && dbBranches.length > 0) ? dbBranches : GLOBAL_DB_BRANCHES;
+  if (allDb && allDb.length > 0) {
+    const foundDb = allDb.find((b) => b.id === id || b.code === id);
     if (foundDb) return cleanBranchName(foundDb.name);
   }
   const found = BRANCHES.find((b) => b.id === id || b.code === id)?.name || id;
@@ -271,8 +279,8 @@ export function employeeName(id: string): string {
 
 export function getBranchHeadName(branchId?: string): string | null {
   if (!branchId) return null;
-  const head = EMPLOYEES.find((e) => e.branchId === branchId && e.role === "หัวหน้าสาขา") ||
-               EMPLOYEES.find((e) => e.branchId === branchId && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
+  const head = EMPLOYEES.find((e) => isSameBranch(e.branchId, branchId) && e.role === "หัวหน้าสาขา") ||
+               EMPLOYEES.find((e) => isSameBranch(e.branchId, branchId) && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
   if (head) {
     return `${head.firstName} ${head.lastName} (${head.role})`;
   }
@@ -281,7 +289,7 @@ export function getBranchHeadName(branchId?: string): string | null {
 
 export function getBranchManagerName(branchId?: string): string | null {
   if (!branchId) return null;
-  const manager = EMPLOYEES.find((e) => e.branchId === branchId && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
+  const manager = EMPLOYEES.find((e) => isSameBranch(e.branchId, branchId) && (e.role === "ผู้จัดการสาขา" || e.role?.includes("ผู้จัดการ")));
   if (manager) {
     return `${manager.firstName} ${manager.lastName} (ผู้จัดการสาขา)`;
   }

@@ -105,9 +105,17 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
 
 
-  const allAnswered = ALL_ITEMS.every((it) => (answers[it.id]?.score || 0) > 0);
+  const allAnswered = ALL_ITEMS.every((it) => answers[it.id]?.score !== undefined);
 
   function handleSubmit() {
+    if (!branchId) {
+      alert("กรุณาเลือกสาขาก่อนบันทึกการประเมิน");
+      return;
+    }
+    if (!date) {
+      alert("กรุณาระบุวันที่ทำการตรวจประเมิน");
+      return;
+    }
     const items: AuditItemResult[] = ALL_ITEMS.map((it) => {
       const a = answers[it.id] || emptyAnswer(it.id);
       const score = a.score || 0;
@@ -285,31 +293,49 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
             {sec.items.map((item) => {
               const ans = answers[item.id] || emptyAnswer(item.id);
               const score = ans.score || 0;
-              const isDefect = score > 0 && score <= 3;
+              const isDefect = ans.score !== undefined && score <= 3;
 
               return (
                 <div key={item.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="font-bold text-sm text-navy">{item.name}</div>
                     {/* Star Rating */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => updateItem(item.id, { score: 0 })}
+                        title="ให้ 0 คะแนน (ไม่ผ่านเลย)"
+                        className={`px-2 py-0.5 rounded-md text-xs font-bold transition border ${
+                          ans.score === 0 && answers[item.id]?.score !== undefined
+                            ? "bg-status-bad text-white border-status-bad shadow-sm"
+                            : "bg-white text-slate-500 border-slate-300 hover:bg-slate-100"
+                        }`}
+                      >
+                        0 คะแนน
+                      </button>
                       {[1, 2, 3, 4, 5].map((st) => (
                         <button
                           key={st}
                           type="button"
-                          onClick={() => updateItem(item.id, { score: st })}
+                          onClick={() =>
+                            updateItem(item.id, {
+                              score: answers[item.id]?.score === st ? 0 : st,
+                            })
+                          }
                           className="p-1 focus:outline-none"
                         >
                           <Star
                             className={`w-5 h-5 ${
-                              st <= score
+                              st <= score && answers[item.id]?.score !== undefined
                                 ? "text-amber-400 fill-amber-400"
                                 : "text-slate-300 hover:text-amber-200"
                             }`}
                           />
                         </button>
                       ))}
-                      <span className="text-xs font-bold text-navy ml-2">{score} / 5</span>
+                      <span className="text-xs font-bold text-navy ml-2">
+                        {answers[item.id]?.score !== undefined ? `${score} / 5` : "ยังไม่ให้คะแนน"}
+                      </span>
                     </div>
                   </div>
 

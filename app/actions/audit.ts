@@ -30,6 +30,9 @@ async function getBranchDbId(inputBranchId: string): Promise<string | null> {
 
 /** Map DB branchId (cuid) -> mock branchId (B01) */
 async function getMockBranchId(dbBranchId: string): Promise<string> {
+  if (!dbBranchId) return "";
+  const alreadyMock = BRANCHES.find((b) => b.id === dbBranchId || b.code === dbBranchId);
+  if (alreadyMock) return alreadyMock.id;
   const dbBranch = await prisma.branch.findUnique({ where: { id: dbBranchId } });
   if (!dbBranch) return dbBranchId;
   const mockBranch = BRANCHES.find((b) => b.code === dbBranch.code);

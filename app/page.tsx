@@ -9,8 +9,8 @@ import EmployeeDirectory from "@/components/employees/EmployeeDirectory";
 import BranchDirectory from "@/components/branches/BranchDirectory";
 import LoginPage from "@/components/auth/LoginPage";
 import { UserRole, Audit } from "@/lib/types/audit";
-import { syncEmployees } from "@/lib/mock-data";
-import { getEmployees } from "@/app/actions/employee";
+import { syncEmployees, syncBranches } from "@/lib/mock-data";
+import { getEmployees, getBranches } from "@/app/actions/employee";
 import { saveAudit, getAudits } from "@/app/actions/audit";
 
 export default function Home() {
@@ -26,7 +26,7 @@ export default function Home() {
   const loadAuditsFromDb = useCallback(async () => {
     try {
       const dbAudits = await getAudits();
-      if (dbAudits) {
+      if (Array.isArray(dbAudits)) {
         setAuditsList(dbAudits);
       }
     } catch (err) {
@@ -37,9 +37,10 @@ export default function Home() {
   useEffect(() => {
     async function initDbSync() {
       try {
-        const [emps, dbAudits] = await Promise.all([getEmployees(), getAudits()]);
+        const [emps, branches, dbAudits] = await Promise.all([getEmployees(), getBranches(), getAudits()]);
         if (emps && emps.length > 0) syncEmployees(emps);
-        if (dbAudits) setAuditsList(dbAudits);
+        if (branches && branches.length > 0) syncBranches(branches);
+        if (Array.isArray(dbAudits)) setAuditsList(dbAudits);
       } catch (err) {
         console.error("Error syncing DB data on mount:", err);
       }
@@ -50,7 +51,7 @@ export default function Home() {
     const interval = setInterval(async () => {
       try {
         const dbAudits = await getAudits();
-        if (dbAudits && dbAudits.length > 0) {
+        if (Array.isArray(dbAudits)) {
           setAuditsList(dbAudits);
         }
       } catch (err) {
