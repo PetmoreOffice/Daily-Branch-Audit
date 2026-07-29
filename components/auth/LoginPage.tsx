@@ -18,6 +18,7 @@ export const ONLY_ADMIN_EMAIL = "mis_01@newgenman.co.th";
 export const AUTHORIZED_GMAIL_ACCOUNTS: string[] = [
   "llltalalalll555@gmail.com",
   "firstman@gmail.com",
+  "Pingman.ta@gmail.com",
 ];
 export const ADMIN_EMAILS: string[] = [ONLY_ADMIN_EMAIL, "mis_01", ...AUTHORIZED_GMAIL_ACCOUNTS];
 export const ALLOWED_COMPANY_DOMAINS: string[] = ["@newgenman.co.th", "@petmoregroups.com"];
