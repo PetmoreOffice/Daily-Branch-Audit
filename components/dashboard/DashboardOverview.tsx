@@ -59,53 +59,74 @@ export default function DashboardOverview({
     return Array.from(set).sort();
   }, [audits]);
 
-  const filtered = monthFilter === "all" ? audits : audits.filter((a) => a.date.startsWith(monthFilter));
+  const filtered = useMemo(
+    () => (monthFilter === "all" ? audits : audits.filter((a) => a.date.startsWith(monthFilter))),
+    [audits, monthFilter]
+  );
 
-  const todayCount = audits.filter((a) => a.date === todayStr).length;
-  const monthCount = audits.filter((a) => a.date.startsWith(thisMonth)).length;
-  const allItemScores = filtered.flatMap((a) => a.items);
-  const overallAvg = avgScore(allItemScores);
+  const todayCount = useMemo(() => audits.filter((a) => a.date === todayStr).length, [audits, todayStr]);
+  const monthCount = useMemo(() => audits.filter((a) => a.date.startsWith(thisMonth)).length, [audits, thisMonth]);
+  const allItemScores = useMemo(() => filtered.flatMap((a) => a.items), [filtered]);
+  const overallAvg = useMemo(() => avgScore(allItemScores), [allItemScores]);
 
-  const branchAverages = BRANCHES.map((b) => {
-    const items = filtered.filter((a) => isSameBranch(a.branchId, b)).flatMap((a) => a.items);
-    return { branch: b, avg: avgScore(items) };
-  }).filter((x) => x.avg > 0);
-  branchAverages.sort((a, b) => b.avg - a.avg);
+  const branchAverages = useMemo(() => {
+    const list = BRANCHES.map((b) => {
+      const items = filtered.filter((a) => isSameBranch(a.branchId, b)).flatMap((a) => a.items);
+      return { branch: b, avg: avgScore(items) };
+    }).filter((x) => x.avg > 0);
+    return list.sort((a, b) => b.avg - a.avg);
+  }, [filtered]);
 
-  const failingItems = allItemScores.filter((i) => i.status !== "ผ่าน").length;
-  const openActions = allItemScores.filter((i) => i.status !== "ผ่าน" && i.photosAfter.length === 0).length;
+  const failingItems = useMemo(() => allItemScores.filter((i) => i.status !== "ผ่าน").length, [allItemScores]);
+  const openActions = useMemo(
+    () => allItemScores.filter((i) => i.status !== "ผ่าน" && i.photosAfter.length === 0).length,
+    [allItemScores]
+  );
 
-  const monthlyTrend = months.map((m) => {
-    const items = audits.filter((a) => a.date.startsWith(m)).flatMap((a) => a.items);
-    return { month: m.slice(2), score: Number(avgScore(items).toFixed(2)) };
-  });
+  const monthlyTrend = useMemo(() => {
+    return months.map((m) => {
+      const items = audits.filter((a) => a.date.startsWith(m)).flatMap((a) => a.items);
+      return { month: m.slice(2), score: Number(avgScore(items).toFixed(2)) };
+    });
+  }, [audits, months]);
 
-  const byBranchChart = branchAverages.map((x) => ({
-    name: x.branch.code,
-    score: Number(x.avg.toFixed(2)),
-    branchId: x.branch.id,
-  }));
+  const byBranchChart = useMemo(() => {
+    return branchAverages.map((x) => ({
+      name: x.branch.code,
+      score: Number(x.avg.toFixed(2)),
+      branchId: x.branch.id,
+    }));
+  }, [branchAverages]);
 
-  const bySectionChart = TEMPLATE.sections.map((s) => {
-    const ids = s.items.map((i) => i.id);
-    const items = allItemScores.filter((i) => ids.includes(i.itemId));
-    return { name: s.name, score: Number(avgScore(items).toFixed(2)) };
-  });
+  const bySectionChart = useMemo(() => {
+    return TEMPLATE.sections.map((s) => {
+      const ids = s.items.map((i) => i.id);
+      const items = allItemScores.filter((i) => ids.includes(i.itemId));
+      return { name: s.name, score: Number(avgScore(items).toFixed(2)) };
+    });
+  }, [allItemScores]);
 
-  const defectPie = TEMPLATE.sections.map((s) => {
-    const ids = s.items.map((i) => i.id);
-    const count = allItemScores.filter((i) => ids.includes(i.itemId) && i.status !== "ผ่าน").length;
-    return { name: s.name.replace(/^\d+\.\s*/, ""), value: count };
-  }).filter((d) => d.value > 0);
+  const defectPie = useMemo(() => {
+    return TEMPLATE.sections.map((s) => {
+      const ids = s.items.map((i) => i.id);
+      const count = allItemScores.filter((i) => ids.includes(i.itemId) && i.status !== "ผ่าน").length;
+      return { name: s.name.replace(/^\d+\.\s*/, ""), value: count };
+    }).filter((d) => d.value > 0);
+  }, [allItemScores]);
 
-  const employeeStats = EMPLOYEES.map((e) => {
-    const related = filtered.flatMap((a) => a.items.filter((i) => i.responsibleIds.includes(e.id)));
-    const failCount = related.filter((i) => i.status !== "ผ่าน").length;
-    return { employee: e, tagCount: related.length, failCount, avg: avgScore(related) };
-  }).filter((x) => x.tagCount > 0);
+  const employeeStats = useMemo(() => {
+    return EMPLOYEES.map((e) => {
+      const related = filtered.flatMap((a) => a.items.filter((i) => i.responsibleIds.includes(e.id)));
+      const failCount = related.filter((i) => i.status !== "ผ่าน").length;
+      return { employee: e, tagCount: related.length, failCount, avg: avgScore(related) };
+    }).filter((x) => x.tagCount > 0);
+  }, [filtered]);
 
-  const mostTagged = [...employeeStats].sort((a, b) => b.tagCount - a.tagCount).slice(0, 8);
-  const mostFlagged = [...employeeStats].filter((x) => x.failCount > 0).sort((a, b) => b.failCount - a.failCount).slice(0, 8);
+  const mostTagged = useMemo(() => [...employeeStats].sort((a, b) => b.tagCount - a.tagCount).slice(0, 8), [employeeStats]);
+  const mostFlagged = useMemo(
+    () => [...employeeStats].filter((x) => x.failCount > 0).sort((a, b) => b.failCount - a.failCount).slice(0, 8),
+    [employeeStats]
+  );
 
   const [selectedSectionModalName, setSelectedSectionModalName] = useState<string | null>(null);
 
