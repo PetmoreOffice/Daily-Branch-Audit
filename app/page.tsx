@@ -7,6 +7,7 @@ import NewAuditWizard from "@/components/audit/NewAuditWizard";
 import AuditHistory from "@/components/audit/AuditHistory";
 import EmployeeDirectory from "@/components/employees/EmployeeDirectory";
 import BranchDirectory from "@/components/branches/BranchDirectory";
+import ActionItemsTracker from "@/components/action-items/ActionItemsTracker";
 import LoginPage, { inferRoleFromEmail } from "@/components/auth/LoginPage";
 import { UserRole, Audit } from "@/lib/types/audit";
 import { syncEmployees, syncBranches } from "@/lib/mock-data";
@@ -180,7 +181,8 @@ export default function Home() {
       {page === "employees" && <EmployeeDirectory selectedEmployeeId={selectedEmployeeId} />}
 
       {page === "branches" && <BranchDirectory audits={auditsList} onDrillBranch={handleDrillBranch} />}
+
+      {page === "action_items" && <ActionItemsTracker audits={auditsList} />}
     </AppShell>
   );
 }
-

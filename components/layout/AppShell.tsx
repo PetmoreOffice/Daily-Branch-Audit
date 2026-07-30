@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Users,
   Store,
+  Wrench,
   Sun,
   Moon,
   LogOut,
@@ -49,13 +50,14 @@ export default function AppShell({
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // All 5 sidebar tab items accessible to everyone without restriction
+  // Sidebar menu items
   const menuItems = [
     { key: "dashboard", label: "Dashboard ภาพรวม", icon: LayoutDashboard },
     { key: "audit_new", label: "เริ่มการตรวจประเมิน", icon: ClipboardCheck },
     { key: "audit_history", label: "ประวัติการตรวจประเมิน", icon: CalendarDays },
     { key: "employees", label: "จัดการพนักงาน", icon: Users },
     { key: "branches", label: "จัดการสาขา", icon: Store },
+    { key: "action_items", label: "ติดตามการแก้ไขปัญหา", icon: Wrench },
   ];
 
   return (
