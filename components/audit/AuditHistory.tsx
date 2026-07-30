@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, CalendarDays, Filter, Eye, ChevronRight, X, UserCheck, ClipboardX, BarChart2, Camera, FileText } from "lucide-react";
+import { Search, CalendarDays, Filter, Eye, ChevronRight, X, UserCheck, ClipboardX, BarChart2, Camera, FileText, Download } from "lucide-react";
 import { Audit } from "@/lib/types/audit";
 import { branchName, itemName, employeeName, avgScore, statusFromScore, ALL_ITEMS, formatAuditorName, formatDateDDMMYYYY } from "@/lib/mock-data";
+import { exportAuditToPDF } from "@/lib/pdfExporter";
 
 interface AuditHistoryProps {
   audits: Audit[];
@@ -130,7 +131,16 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
 
                   return (
                     <tr key={a.id} className="hover:bg-slate-50 transition group">
-                      <td className="p-3.5 font-bold text-audit-blue">{a.id}</td>
+                      <td className="p-3.5 font-bold text-audit-blue">
+                        <button
+                          onClick={() => exportAuditToPDF(a)}
+                          title="คลิกเพื่อดาวน์โหลดรายงานผลการประเมินเป็นไฟล์ PDF"
+                          className="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1.5 focus:outline-none"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          {a.id}
+                        </button>
+                      </td>
                       <td className="p-3.5 font-medium text-slate-600">{formatDateDDMMYYYY(a.date)}</td>
                       <td className="p-3.5 font-bold text-navy">{branchName(a.branchId)}</td>
                       <td className="p-3.5 font-medium text-slate-600 max-w-[160px] truncate">{formatAuditorName(a.auditor, a.branchId)}</td>
@@ -187,9 +197,17 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                   const status = statusFromScore(avg, 5);
                   const colors = scoreColor(avg, 5);
                   return (
-                    <div className="text-center px-4 py-2 rounded-xl" style={{ background: colors.bg }}>
-                      <div className={`text-2xl font-black ${colors.text}`}>{avg.toFixed(2)}</div>
-                      <div className={`text-xs font-bold ${colors.text}`}>{status}</div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => exportAuditToPDF(selectedAudit)}
+                        className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                      >
+                        <Download className="w-4 h-4" /> ดาวน์โหลด PDF
+                      </button>
+                      <div className="text-center px-4 py-2 rounded-xl" style={{ background: colors.bg }}>
+                        <div className={`text-2xl font-black ${colors.text}`}>{avg.toFixed(2)}</div>
+                        <div className={`text-xs font-bold ${colors.text}`}>{status}</div>
+                      </div>
                     </div>
                   );
                 })()}
