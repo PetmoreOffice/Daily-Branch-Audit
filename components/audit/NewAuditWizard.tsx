@@ -436,9 +436,26 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                           className="hidden"
                           onChange={(e) => {
                             const files = Array.from(e.target.files || []);
-                            const urls = files.map((f) => URL.createObjectURL(f));
-                            updateItem(item.id, {
-                              photosBefore: [...(ans.photosBefore || []), ...urls],
+                            if (files.length === 0) return;
+                            files.forEach((file) => {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                const base64 = ev.target?.result as string;
+                                if (base64) {
+                                  setAnswers((prev) => {
+                                    const current = prev[item.id]?.photosBefore || [];
+                                    return {
+                                      ...prev,
+                                      [item.id]: {
+                                        ...emptyAnswer(item.id),
+                                        ...prev[item.id],
+                                        photosBefore: [...current, base64],
+                                      },
+                                    };
+                                  });
+                                }
+                              };
+                              reader.readAsDataURL(file);
                             });
                           }}
                         />

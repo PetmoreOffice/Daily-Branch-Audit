@@ -10,6 +10,32 @@ interface AuditHistoryProps {
   audits: Audit[];
 }
 
+function SafeImageThumbnail({ url, label }: { url: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  const isDataOrHttp = url.startsWith("data:") || url.startsWith("http:") || url.startsWith("https:") || url.startsWith("blob:");
+
+  if (failed || !isDataOrHttp) {
+    return (
+      <div className="h-10 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 shrink-0">
+        <Camera className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{url}</span>
+      </div>
+    );
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="relative group shrink-0">
+      <img
+        src={url}
+        alt={label}
+        onError={() => setFailed(true)}
+        className="w-16 h-16 object-cover rounded-lg border border-audit-hairline shadow-xs group-hover:opacity-90 transition"
+      />
+      <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 text-white text-xs font-bold rounded-lg transition">ขยาย</span>
+    </a>
+  );
+}
+
 export default function AuditHistory({ audits }: AuditHistoryProps) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -252,22 +278,12 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                     )}
                     {((item.photosBefore && item.photosBefore.length > 0) || (item.photosAfter && item.photosAfter.length > 0)) && (
                       <div className="space-y-1 pt-1">
-                        <div className="text-xs font-bold text-navy flex items-center gap-1">
-                          <Camera className="w-3.5 h-3.5 text-audit-blue" />
-                          รูปภาพแนบประกอบ ({(item.photosBefore?.length || 0) + (item.photosAfter?.length || 0)} ภาพ):
-                        </div>
                         <div className="flex flex-wrap gap-2 pt-0.5">
                           {item.photosBefore?.map((url, pIdx) => (
-                            <a key={`b-${pIdx}`} href={url} target="_blank" rel="noreferrer" className="relative group shrink-0">
-                              <img src={url} alt={`photo-${pIdx}`} className="w-16 h-16 object-cover rounded-lg border border-audit-hairline shadow-xs group-hover:opacity-90 transition" />
-                              <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 text-white text-xs font-bold rounded-lg transition">ขยาย</span>
-                            </a>
+                            <SafeImageThumbnail key={`b-${pIdx}`} url={url} label={`photo-${pIdx}`} />
                           ))}
                           {item.photosAfter?.map((url, pIdx) => (
-                            <a key={`a-${pIdx}`} href={url} target="_blank" rel="noreferrer" className="relative group shrink-0">
-                              <img src={url} alt={`photo-after-${pIdx}`} className="w-16 h-16 object-cover rounded-lg border border-audit-hairline shadow-xs group-hover:opacity-90 transition" />
-                              <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 text-white text-xs font-bold rounded-lg transition">ขยาย</span>
-                            </a>
+                            <SafeImageThumbnail key={`a-${pIdx}`} url={url} label={`photo-after-${pIdx}`} />
                           ))}
                         </div>
                       </div>
