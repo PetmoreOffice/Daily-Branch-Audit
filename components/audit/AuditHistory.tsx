@@ -161,9 +161,8 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                         <button
                           onClick={() => exportAuditToPDF(a)}
                           title="คลิกเพื่อดาวน์โหลดรายงานผลการประเมินเป็นไฟล์ PDF"
-                          className="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1.5 focus:outline-none"
+                          className="font-bold text-blue-600 hover:text-blue-800 hover:underline focus:outline-none"
                         >
-                          <FileText className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                           {a.id}
                         </button>
                       </td>
