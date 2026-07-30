@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { Audit } from "@/lib/types/audit";
-import { TEMPLATE, BRANCHES } from "@/lib/mock-data";
+import { TEMPLATE, BRANCHES, ALL_ITEMS } from "@/lib/mock-data";
 
 /** Resolve any branch ID format (cuid, code like NKR-01, or mock ID B01) -> DB branchId */
 async function getBranchDbId(inputBranchId: string): Promise<string | null> {
@@ -37,6 +37,31 @@ async function getMockBranchId(dbBranchId: string): Promise<string> {
   if (!dbBranch) return dbBranchId;
   const mockBranch = BRANCHES.find((b) => b.code === dbBranch.code);
   return mockBranch ? mockBranch.id : dbBranch.id;
+}
+
+function getItemKeyword(itemId: string): string[] {
+  switch (itemId) {
+    case "I01": return ["ประตู", "เปิดปิด"];
+    case "I02": return ["เงินทอน", "ความพร้อม"];
+    case "I03": return ["อื่นๆ"];
+    case "I04": return ["ยิ้ม", "ทักทาย"];
+    case "I05": return ["สมาชิก", "หมา", "แมว"];
+    case "I06": return ["โปรโมชั่น"];
+    case "I07": return ["รับเงิน", "ส่วนลด"];
+    case "I08": return ["ทวนรายการ", "นำส่งลูกค้า"];
+    case "I09": return ["อื่นๆ"];
+    case "I10": return ["fifo", "exp"];
+    case "I11": return ["ป้ายราคา", "สื่อโปรโมชั่น"];
+    case "I12": return ["กลุ่มยา", "top 1-50", "สินค้าควบคุม"];
+    case "I13": return ["อื่นๆ"];
+    case "I14": return ["ฝุ่น", "เชลฟ์", "ความสะอาด"];
+    case "I15": return ["อื่นๆ"];
+    case "I16": return ["ติดตามงาน", "checklist"];
+    case "I17": return ["ร้องเรียน"];
+    case "I18": return ["ประสานงาน"];
+    case "I19": return ["อื่นๆ"];
+    default: return [];
+  }
 }
 
 /** Module-level cache — avoids re-upserting all sections/items on every saveAudit call */
@@ -77,17 +102,44 @@ async function ensureTemplateInDb() {
       let dbItem = await prisma.auditItem.findFirst({
         where: { sectionId: section.id, name: item.name },
       });
+
       if (!dbItem) {
-        dbItem = await prisma.auditItem.create({
-          data: {
-            sectionId: section.id,
-            name: item.name,
-            maxScore: item.maxScore,
-            minScore: item.minScore,
-            requirePhoto: item.requirePhoto,
-            requireResponsible: item.requireResponsible,
-          },
-        });
+        // Try to find existing item in section by keywords to update name instead of creating duplicate
+        const keywords = getItemKeyword(item.id);
+        const sectionItems = await prisma.auditItem.findMany({ where: { sectionId: section.id } });
+        dbItem = sectionItems.find((it) => keywords.some((kw) => it.name.toLowerCase().includes(kw))) || null;
+
+        if (dbItem) {
+          dbItem = await prisma.auditItem.update({
+            where: { id: dbItem.id },
+            data: {
+              name: item.name,
+              maxScore: item.maxScore,
+              minScore: item.minScore,
+              requirePhoto: item.requirePhoto,
+              requireResponsible: item.requireResponsible,
+            },
+          });
+        } else {
+          dbItem = await prisma.auditItem.create({
+            data: {
+              sectionId: section.id,
+              name: item.name,
+              maxScore: item.maxScore,
+              minScore: item.minScore,
+              requirePhoto: item.requirePhoto,
+              requireResponsible: item.requireResponsible,
+            },
+          });
+        }
+      } else {
+        // Update maxScore/minScore if changed
+        if (dbItem.maxScore !== item.maxScore || dbItem.minScore !== item.minScore) {
+          dbItem = await prisma.auditItem.update({
+            where: { id: dbItem.id },
+            data: { maxScore: item.maxScore, minScore: item.minScore },
+          });
+        }
       }
       itemIdMap[item.id] = dbItem.id;
     }
@@ -189,9 +241,26 @@ export async function getAudits(): Promise<Audit[]> {
       gps: a.gps || "",
       items: a.items.map((item) => {
         const meta = dbItemMap[item.itemId];
-        const mockId = meta
-          ? (mockItemLookup[`${meta.sectionName}||${meta.itemName}`] || meta.itemName || item.itemId)
-          : item.itemId;
+        let mockId = item.itemId;
+
+        if (meta) {
+          const directMatch = mockItemLookup[`${meta.sectionName}||${meta.itemName}`];
+          if (directMatch) {
+            mockId = directMatch;
+          } else {
+            // Keyword fallback for resilient matching when template item names change
+            const secItems = ALL_ITEMS.filter(
+              (i: any) => i.section === meta.sectionName || meta.sectionName.startsWith(i.section.slice(0, 2))
+            );
+            const nameLower = meta.itemName.toLowerCase();
+            const matched = secItems.find((i: any) => {
+              const kws = getItemKeyword(i.id);
+              return kws.some((kw) => nameLower.includes(kw));
+            });
+            mockId = matched ? matched.id : (meta.itemName || item.itemId);
+          }
+        }
+
         return {
           itemId: mockId,
           score: item.score,
