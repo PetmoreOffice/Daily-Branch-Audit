@@ -326,11 +326,33 @@ export default function DashboardOverview({
                     data={defectPie}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={55}
-                    outerRadius={78}
-                    paddingAngle={4}
-                    stroke="none"
-                    cornerRadius={5}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius={75}
+                    labelLine={false}
+                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+                      if (percent < 0.04) return null;
+                      const RADIAN = Math.PI / 180;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="#ffffff"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={11}
+                          fontWeight={800}
+                        >
+                          {`${(percent * 100).toFixed(0)}%`}
+                        </text>
+                      );
+                    }}
+                    stroke="#ffffff"
+                    strokeWidth={1.5}
                     cursor="pointer"
                     onClick={(entry) => {
                       if (entry && entry.name) {
