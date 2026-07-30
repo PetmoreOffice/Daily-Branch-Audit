@@ -2,20 +2,21 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  AreaChart, Area
 } from "recharts";
 import {
-  ClipboardCheck, CalendarDays, Star, TrendingUp, TrendingDown,
-  FileWarning, AlertTriangle, ChevronRight, X, LayoutDashboard,
-  PlusCircle, BarChart3, Users2
+  ClipboardCheck, CalendarDays, Star, FileWarning, AlertTriangle,
+  ChevronRight, X, LayoutDashboard, PlusCircle, BarChart3, Users2,
+  Filter,
 } from "lucide-react";
 import KPICard from "./KPICard";
-import { Audit, Branch, Employee, AuditItemResult } from "@/lib/types/audit";
+import SectionScorePanel from "./SectionScorePanel";
+import BranchRankingPanel from "./BranchRankingPanel";
+import { Audit } from "@/lib/types/audit";
 import {
   BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, avgScore, branchName,
-  employeesAtBranchOnDate, isSameBranch
+  isSameBranch,
 } from "@/lib/mock-data";
 
 interface DashboardOverviewProps {
@@ -24,12 +25,27 @@ interface DashboardOverviewProps {
   onSelectEmployee: (empId: string) => void;
 }
 
+const PIE_COLORS = ["#2C5AA0", "#5B8DEF", "#8FB3E8", "#12294B", "#C77C00"];
+
+const TOOLTIP_STYLE = {
+  backgroundColor: "rgba(255,255,255,0.96)",
+  backdropFilter: "blur(8px)",
+  borderRadius: "12px",
+  border: "1px solid #e2e8f0",
+  boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+  fontSize: "13px",
+  color: "#0f172a",
+  padding: "10px 14px",
+};
+
 export default function DashboardOverview({
   audits,
   onDrillBranch,
   onSelectEmployee,
 }: DashboardOverviewProps) {
   const [monthFilter, setMonthFilter] = useState<string>("all");
+  const [selectedEmpModalId, setSelectedEmpModalId] = useState<string | null>(null);
+  const [empFilterTab, setEmpFilterTab] = useState<"all" | "defects">("all");
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const thisMonth = new Date().toISOString().slice(0, 7);
@@ -45,7 +61,6 @@ export default function DashboardOverview({
 
   const todayCount = audits.filter((a) => a.date === todayStr).length;
   const monthCount = audits.filter((a) => a.date.startsWith(thisMonth)).length;
-
   const allItemScores = filtered.flatMap((a) => a.items);
   const overallAvg = avgScore(allItemScores);
 
@@ -54,9 +69,6 @@ export default function DashboardOverview({
     return { branch: b, avg: avgScore(items) };
   }).filter((x) => x.avg > 0);
   branchAverages.sort((a, b) => b.avg - a.avg);
-
-  const top = branchAverages[0];
-  const bottom = branchAverages[branchAverages.length - 1];
 
   const failingItems = allItemScores.filter((i) => i.status !== "ผ่าน").length;
   const openActions = allItemScores.filter((i) => i.status !== "ผ่าน" && i.photosAfter.length === 0).length;
@@ -81,39 +93,50 @@ export default function DashboardOverview({
   const defectPie = TEMPLATE.sections.map((s) => {
     const ids = s.items.map((i) => i.id);
     const count = allItemScores.filter((i) => ids.includes(i.itemId) && i.status !== "ผ่าน").length;
-    return { name: s.name, value: count };
+    return { name: s.name.replace(/^\d+\.\s*/, ""), value: count };
   }).filter((d) => d.value > 0);
-
-  const PIE_COLORS = ["#2C5AA0", "#5B8DEF", "#8FB3E8", "#12294B", "#C77C00"];
 
   const employeeStats = EMPLOYEES.map((e) => {
     const related = filtered.flatMap((a) => a.items.filter((i) => i.responsibleIds.includes(e.id)));
     const failCount = related.filter((i) => i.status !== "ผ่าน").length;
-    return {
-      employee: e,
-      tagCount: related.length,
-      passCount: related.length - failCount,
-      failCount,
-      avg: avgScore(related),
-    };
+    return { employee: e, tagCount: related.length, failCount, avg: avgScore(related) };
   }).filter((x) => x.tagCount > 0);
 
-  const mostTagged = [...employeeStats].sort((a, b) => b.tagCount - a.tagCount).slice(0, 10);
-  const mostFlagged = [...employeeStats]
-    .filter((x) => x.failCount > 0)
-    .sort((a, b) => b.failCount - a.failCount)
-    .slice(0, 10);
+  const mostTagged = [...employeeStats].sort((a, b) => b.tagCount - a.tagCount).slice(0, 8);
+  const mostFlagged = [...employeeStats].filter((x) => x.failCount > 0).sort((a, b) => b.failCount - a.failCount).slice(0, 8);
 
-  const [selectedEmpModalId, setSelectedEmpModalId] = useState<string | null>(null);
-  const [empFilterTab, setEmpFilterTab] = useState<"all" | "defects">("all");
+  const [selectedSectionModalName, setSelectedSectionModalName] = useState<string | null>(null);
 
-  const selectedEmpModal = useMemo(() => {
-    if (!selectedEmpModalId) return null;
-    return EMPLOYEES.find((e) => e.id === selectedEmpModalId) || null;
-  }, [selectedEmpModalId]);
+  // Employee modal
+  const selectedEmpModal = useMemo(() =>
+    selectedEmpModalId ? EMPLOYEES.find((e) => e.id === selectedEmpModalId) || null : null,
+    [selectedEmpModalId]
+  );
 
   const selectedEmpHistory = useMemo(() => {
     if (!selectedEmpModalId) return [];
+    const list: { auditId: string; date: string; branchId: string; auditor: string; itemId: string; score: number; status: string; note: string }[] = [];
+    filtered.forEach((a) => {
+      a.items.forEach((i) => {
+        if (i.responsibleIds.includes(selectedEmpModalId)) {
+          list.push({ auditId: a.id, date: a.date, branchId: a.branchId, auditor: a.auditor, itemId: i.itemId, score: i.score, status: i.status, note: i.note });
+        }
+      });
+    });
+    return list.sort((x, y) => y.date.localeCompare(x.date));
+  }, [filtered, selectedEmpModalId]);
+
+  const selectedSectionHistory = useMemo(() => {
+    if (!selectedSectionModalName) return [];
+    const sec = TEMPLATE.sections.find(
+      (s) =>
+        s.name === selectedSectionModalName ||
+        s.name.includes(selectedSectionModalName) ||
+        selectedSectionModalName.includes(s.name.replace(/^\d+\.\s*/, ""))
+    );
+    if (!sec) return [];
+    const itemIds = sec.items.map((i) => i.id);
+
     const list: {
       auditId: string;
       date: string;
@@ -123,11 +146,14 @@ export default function DashboardOverview({
       score: number;
       status: string;
       note: string;
+      responsibleIds: string[];
+      photosBefore: string[];
+      photosAfter: string[];
     }[] = [];
 
     filtered.forEach((a) => {
       a.items.forEach((i) => {
-        if (i.responsibleIds.includes(selectedEmpModalId)) {
+        if (itemIds.includes(i.itemId) && i.status !== "ผ่าน") {
           list.push({
             auditId: a.id,
             date: a.date,
@@ -137,353 +163,336 @@ export default function DashboardOverview({
             score: i.score,
             status: i.status,
             note: i.note,
+            responsibleIds: i.responsibleIds || [],
+            photosBefore: i.photosBefore || [],
+            photosAfter: i.photosAfter || [],
           });
         }
       });
     });
 
-    list.sort((x, y) => y.date.localeCompare(x.date));
-    return list;
-  }, [filtered, selectedEmpModalId]);
+    return list.sort((x, y) => y.date.localeCompare(x.date));
+  }, [filtered, selectedSectionModalName]);
 
   function getItemDetails(itemId: string) {
     if (!itemId) return { sectionName: "หมวดการประเมิน", itemTitle: "หัวข้อการประเมิน" };
-
-    // 1. Try matching by mock ID in TEMPLATE.sections (e.g. "I01", "I04")
     for (const sec of TEMPLATE.sections) {
       const it = sec.items.find((x) => x.id === itemId);
-      if (it) {
-        return { sectionName: sec.name, itemTitle: it.name };
-      }
+      if (it) return { sectionName: sec.name, itemTitle: it.name };
     }
-
-    // 2. Try matching by exact item name in TEMPLATE.sections
     for (const sec of TEMPLATE.sections) {
       const it = sec.items.find((x) => x.name === itemId);
-      if (it) {
-        return { sectionName: sec.name, itemTitle: it.name };
-      }
+      if (it) return { sectionName: sec.name, itemTitle: it.name };
     }
-
-    // 3. Try matching against ALL_ITEMS (by id or name)
     const foundAll = ALL_ITEMS.find((x) => x.id === itemId || x.name === itemId);
     if (foundAll) {
       const sec = TEMPLATE.sections.find((s) => s.items.some((i) => i.id === foundAll.id));
       return { sectionName: sec?.name || foundAll.section || "หมวดการประเมิน", itemTitle: foundAll.name };
     }
-
-    // 4. Try fuzzy matching: check if itemId is a substring or contains an item name
-    for (const sec of TEMPLATE.sections) {
-      const it = sec.items.find((x) => itemId.includes(x.id) || itemId.includes(x.name) || x.name.includes(itemId));
-      if (it) {
-        return { sectionName: sec.name, itemTitle: it.name };
-      }
-    }
-
-    // 5. If itemId starts with a CUID/UUID (contains long alphanumeric hash without spaces), format cleanly
-    if (/^[a-z0-9]{20,}$/i.test(itemId)) {
-      return { sectionName: "หมวดการประเมินทั่วไป", itemTitle: "หัวข้อประเมินประจำสาขา" };
-    }
-
+    if (/^[a-z0-9]{20,}$/i.test(itemId)) return { sectionName: "หมวดการประเมินทั่วไป", itemTitle: "หัวข้อประเมินประจำสาขา" };
     return { sectionName: "หมวดการประเมิน", itemTitle: itemId };
   }
 
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+    <div className="p-5 md:p-6 space-y-6 max-w-7xl mx-auto">
+
+      {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-navy tracking-tight">Dashboard ภาพรวมการประเมิน</h1>
-          <p className="text-xs font-medium text-audit-slate">วิเคราะห์ผลตรวจประเมินสาขาและประสิทธิภาพพนักงานแบบ Real-time</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-navy dark:text-slate-100 tracking-tight">
+            Dashboard ภาพรวมการประเมิน
+          </h1>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+            วิเคราะห์ผลตรวจประเมินสาขาและประสิทธิภาพพนักงานแบบ Real-time
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-audit-slate">เลือกช่วงเวลา:</label>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <label className="text-xs font-semibold text-slate-500 whitespace-nowrap">ช่วงเวลา:</label>
           <select
             value={monthFilter}
             onChange={(e) => setMonthFilter(e.target.value)}
-            className="bg-white border border-audit-hairline rounded-lg text-xs font-semibold px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-audit-blue"
+            className="bg-white dark:bg-slate-800 border border-audit-hairline dark:border-slate-700 rounded-xl text-xs font-semibold px-3 py-2 text-navy dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-audit-blue transition shadow-sm"
           >
             <option value="all">ทุกเดือน (6 เดือนล่าสุด)</option>
             {months.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Empty State Banner */}
+      {/* ── Empty State ── */}
       {audits.length === 0 && (
-        <div className="rounded-2xl border-2 border-dashed border-audit-hairline bg-white p-10 flex flex-col items-center text-center gap-4">
+        <div className="rounded-2xl border-2 border-dashed border-audit-hairline bg-white dark:bg-slate-800/50 p-10 flex flex-col items-center text-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-audit-tint flex items-center justify-center">
             <LayoutDashboard className="w-8 h-8 text-audit-blue" />
           </div>
           <div>
-            <h2 className="text-base font-extrabold text-navy mb-1">ยังไม่มีข้อมูลการประเมิน</h2>
-            <p className="text-xs text-audit-slate leading-relaxed max-w-sm">
+            <h2 className="text-base font-extrabold text-navy dark:text-slate-100 mb-1">ยังไม่มีข้อมูลการประเมิน</h2>
+            <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               เริ่มทำการตรวจประเมินสาขาเพื่อดูข้อมูลสถิติ กราฟ และ KPI แบบ Real-time ที่นี่
             </p>
           </div>
-          <div className="flex gap-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-audit-slate px-3 py-2 bg-slate-50 rounded-lg border border-audit-hairline">
+          <div className="flex gap-3 flex-wrap justify-center">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 px-3 py-2 bg-slate-50 rounded-lg border border-audit-hairline">
               <PlusCircle className="w-3.5 h-3.5 text-audit-blue" /> เริ่มตรวจประเมินสาขาใหม่
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-audit-slate px-3 py-2 bg-slate-50 rounded-lg border border-audit-hairline">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 px-3 py-2 bg-slate-50 rounded-lg border border-audit-hairline">
               <BarChart3 className="w-3.5 h-3.5 text-audit-blue" /> กราฟ &amp; Analytics จะแสดงที่นี่
             </div>
           </div>
         </div>
       )}
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-        <KPICard icon={ClipboardCheck} label="ตรวจวันนี้" value={todayCount} sub={todayLabel} accent="#2C5AA0" />
-        <KPICard icon={CalendarDays} label="ตรวจเดือนนี้" value={monthCount} sub={monthLabel} accent="#5B8DEF" />
-        <KPICard icon={Star} label="คะแนนเฉลี่ยรวม" value={overallAvg.toFixed(2) + " / 5"} accent="#12294B" />
-        <KPICard icon={TrendingUp} label="สูงสุด" value={top ? top.branch.code : "-"} sub={top ? top.branch.name : ""} accent="#1E8E5A" />
-        <KPICard icon={TrendingDown} label="ต่ำสุด" value={bottom ? bottom.branch.code : "-"} sub={bottom ? bottom.branch.name : ""} accent="#C23B3B" />
-        <KPICard icon={FileWarning} label="หัวข้อไม่ผ่าน" value={failingItems} accent="#C77C00" />
-        <KPICard icon={AlertTriangle} label="Action ค้าง" value={openActions} accent="#C23B3B" />
+      {/* ── Row 1: 4 KPI Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <KPICard
+          icon={CalendarDays}
+          label="ตรวจเดือนนี้"
+          value={monthCount}
+          sub={monthLabel}
+          accent="#2C5AA0"
+        />
+        <KPICard
+          icon={Star}
+          label="คะแนนเฉลี่ยรวม"
+          value={overallAvg > 0 ? `${overallAvg.toFixed(2)} / 5` : "–"}
+          sub={overallAvg >= 4 ? "อยู่ในเกณฑ์ดี" : overallAvg >= 3 ? "ต้องปรับปรุง" : overallAvg > 0 ? "อยู่ในเกณฑ์ต่ำ" : undefined}
+          accent={overallAvg >= 4 ? "#1E8E5A" : overallAvg >= 3 ? "#C77C00" : "#C23B3B"}
+        />
+        <KPICard
+          icon={FileWarning}
+          label="หัวข้อไม่ผ่าน"
+          value={failingItems}
+          sub={failingItems > 0 ? "พบข้อบกพร่องในรอบนี้" : "ผ่านทั้งหมด"}
+          accent="#C77C00"
+        />
+        <KPICard
+          icon={AlertTriangle}
+          label="Action ค้างแก้ไข"
+          value={openActions}
+          sub={openActions > 0 ? "ยังไม่มีภาพหลังแก้ไข" : "ครบถ้วนทุกรายการ"}
+          accent={openActions > 0 ? "#C23B3B" : "#1E8E5A"}
+        />
       </div>
 
-      {/* Analytics Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Trend Line Chart */}
-        <div className="lg:col-span-7 bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
-          <h3 className="text-sm font-bold text-navy mb-3">คะแนนเฉลี่ยรายเดือน</h3>
-          <div className="h-60">
+      {/* ── Row 2: Trend + Donut ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+        {/* Trend Area Chart */}
+        <div className="lg:col-span-7 bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-navy dark:text-slate-100">คะแนนเฉลี่ยรายเดือน</h3>
+            <p className="text-xs text-slate-400 mt-0.5">แนวโน้ม 6 เดือนล่าสุด</p>
+          </div>
+          <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#2C5AA0" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#2C5AA0" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dy={10} />
                 <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dx={10} />
-                <Tooltip
-                  cursor={{ stroke: "#cbd5e1", strokeWidth: 1, strokeDasharray: "4 4" }}
-                  contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
-                  itemStyle={{ color: "#0f172a", fontWeight: 700 }}
-                />
-                <Area type="monotone" dataKey="score" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" activeDot={{ r: 6, fill: "#2563eb", stroke: "white", strokeWidth: 2 }} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#0f172a", fontWeight: 700 }} cursor={{ stroke: "#cbd5e1", strokeWidth: 1, strokeDasharray: "4 4" }} />
+                <Area type="monotone" dataKey="score" stroke="#2C5AA0" strokeWidth={2.5} fillOpacity={1} fill="url(#colorScore)" activeDot={{ r: 5, fill: "#2C5AA0", stroke: "white", strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Defect Pie Chart */}
-        <div className="lg:col-span-5 bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
-          <h3 className="text-sm font-bold text-navy mb-3">สัดส่วนข้อบกพร่องตามหมวดประเมิน</h3>
-          <div className="h-60">
-             <ResponsiveContainer width="100%" height="100%">
-               <PieChart>
-                 <Pie data={defectPie} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} paddingAngle={5} stroke="none" cornerRadius={4}>
-                   {defectPie.map((_, i) => (
-                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                   ))}
-                 </Pie>
-                 <Tooltip
-                   contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
-                   itemStyle={{ color: "#0f172a", fontWeight: 700 }}
-                 />
-                 <Legend wrapperStyle={{ fontSize: "12px", fill: "#64748b" }} iconType="circle" />
-               </PieChart>
-             </ResponsiveContainer>
+        {/* Defect Donut */}
+        <div className="lg:col-span-5 bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-navy dark:text-slate-100">สัดส่วนข้อบกพร่อง</h3>
+            <p className="text-xs text-slate-400 mt-0.5">แยกตามหมวดประเมิน (คลิกเพื่อดูข้อบกพร่อง)</p>
           </div>
+          {defectPie.length === 0 ? (
+            <div className="h-52 flex items-center justify-center text-xs text-slate-400 flex-col gap-2">
+              <span className="text-3xl">✅</span>
+              <span>ไม่พบข้อบกพร่องในช่วงนี้</span>
+            </div>
+          ) : (
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={defectPie}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={55}
+                    outerRadius={78}
+                    paddingAngle={4}
+                    stroke="none"
+                    cornerRadius={5}
+                    cursor="pointer"
+                    onClick={(entry) => {
+                      if (entry && entry.name) {
+                        setSelectedSectionModalName(entry.name);
+                      }
+                    }}
+                  >
+                    {defectPie.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#0f172a", fontWeight: 700 }} />
+                  <Legend wrapperStyle={{ fontSize: "11px", color: "#64748b", paddingTop: "8px" }} iconType="circle" iconSize={8} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Branch Performance Bar Chart */}
-        <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
-          <h3 className="text-sm font-bold text-navy mb-1">คะแนนเฉลี่ยแต่ละสาขา</h3>
-          <p className="text-xs text-slate-400 mb-3">(คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายสาขา)</p>
-          <div className="h-64">
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart
-                 data={byBranchChart}
-                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                 onClick={(e) => {
-                   const p = e?.activePayload?.[0]?.payload;
-                   if (p) onDrillBranch(p.branchId);
-                 }}
-               >
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                 <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={10} />
-                 <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={10} />
-                 <Tooltip
-                   cursor={{ fill: "rgba(37, 99, 235, 0.05)", rx: 6 }}
-                   contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
-                   itemStyle={{ color: "#0f172a", fontWeight: 700 }}
-                 />
-                 <Bar dataKey="score" fill="#2563eb" radius={[6, 6, 0, 0]} cursor="pointer" />
-               </BarChart>
-             </ResponsiveContainer>
+      {/* ── Row 3: Branch Bar + Section Progress ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+        {/* Branch Bar Chart */}
+        <div className="lg:col-span-6 bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-navy dark:text-slate-100">คะแนนเฉลี่ยแต่ละสาขา</h3>
+            <p className="text-xs text-slate-400 mt-0.5">คลิกที่แท่งกราฟเพื่อดูรายละเอียด</p>
           </div>
-        </div>
-
-        {/* Section Score Horizontal Bar Chart */}
-        <div className="lg:col-span-6 bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
-          <h3 className="text-sm font-bold text-navy mb-4">คะแนนเฉลี่ยตามหมวดประเมิน</h3>
-          <div className="h-64">
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={bySectionChart} layout="vertical" margin={{ left: 15, right: 10, top: 10, bottom: 0 }}>
-                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                 <XAxis type="number" domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={5} />
-                 <YAxis type="category" dataKey="name" width={90} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={-10} />
-                 <Tooltip
-                   cursor={{ fill: "rgba(59, 130, 246, 0.05)", rx: 6 }}
-                   contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)", fontSize: "13px", color: "#0f172a", padding: "12px 16px" }}
-                   itemStyle={{ color: "#0f172a", fontWeight: 700 }}
-                 />
-                 <Bar dataKey="score" fill="#3b82f6" radius={[0, 6, 6, 0]} />
-               </BarChart>
-             </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Rankings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Top 10 */}
-        <div className="bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
-          <h3 className="text-sm font-bold text-navy mb-3 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            สาขาที่คะแนนสูงสุด
-          </h3>
-          <div className="divide-y divide-slate-100">
-            {branchAverages.slice(0, 10).map((d, idx) => (
-              <button
-                key={d.branch.id}
-                onClick={() => onDrillBranch(d.branch.id)}
-                className="w-full flex items-center justify-between py-2.5 hover:bg-slate-50 transition text-left text-xs rounded-lg px-2"
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={byBranchChart}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                onClick={(e) => {
+                  const p = e?.activePayload?.[0]?.payload;
+                  if (p) onDrillBranch(p.branchId);
+                }}
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-slate-400 font-semibold w-4 text-right">{idx + 1}</span>
-                  <span className="font-bold text-navy">{d.branch.name}</span>
-                </div>
-                <span className="font-bold text-emerald-600 text-sm">{d.avg.toFixed(2)}</span>
-              </button>
-            ))}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={10} />
+                <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dx={10} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "#0f172a", fontWeight: 700 }} cursor={{ fill: "rgba(44,90,160,0.05)", rx: 6 }} />
+                <Bar dataKey="score" fill="#2C5AA0" radius={[6, 6, 0, 0]} cursor="pointer" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Bottom 10 */}
-        <div className="bg-white p-5 rounded-xl border border-audit-hairline shadow-sm">
-          <h3 className="text-sm font-bold text-navy mb-3 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-            สาขาที่คะแนนต่ำสุด
-          </h3>
-          <div className="divide-y divide-audit-hairline">
-            {[...branchAverages].reverse().slice(0, 10).map((d, idx) => (
-              <button
-                key={d.branch.id}
-                onClick={() => onDrillBranch(d.branch.id)}
-                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition text-left text-xs"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-slate-400 font-bold w-4 text-right">{idx + 1}</span>
-                  <span className="font-semibold text-navy">{d.branch.name}</span>
-                </div>
-                <span className="font-extrabold text-status-bad text-sm">{d.avg.toFixed(2)}</span>
-              </button>
-            ))}
+        {/* Section Score Progress Bars */}
+        <div className="lg:col-span-6 bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-navy dark:text-slate-100">คะแนนตามหมวดประเมิน</h3>
+            <p className="text-xs text-slate-400 mt-0.5">เขียว ≥80% · เหลือง ≥60% · แดง &lt;60% (คลิกเพื่อดูข้อบกพร่อง)</p>
           </div>
+          <SectionScorePanel
+            sections={bySectionChart}
+            onSelectSection={(name) => setSelectedSectionModalName(name)}
+          />
         </div>
       </div>
 
-      {/* Employee Accountability Section */}
+      {/* ── Row 4: Branch Rankings ── */}
+      <BranchRankingPanel
+        topBranches={branchAverages.slice(0, 5)}
+        bottomBranches={[...branchAverages].reverse().slice(0, 5)}
+        onDrillBranch={onDrillBranch}
+      />
+
+      {/* ── Row 5: Employee Accountability ── */}
       <div>
-        <h2 className="text-base font-extrabold text-navy mb-1">สรุปผลการปฏิบัติงานรายบุคคล</h2>
-        <p className="text-xs text-audit-slate mb-4">คลิกที่รายชื่อเพื่อเปิดดูหน้าต่างประวัติการถูกคอมเมนต์ หัวข้อการประเมิน และคะแนนที่ได้รับแบบรายครั้ง</p>
-        {employeeStats.length === 0 && (
-          <div className="rounded-xl border border-dashed border-audit-hairline bg-white p-8 flex flex-col items-center text-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
-              <Users2 className="w-6 h-6 text-audit-slate" />
+        <div className="mb-4">
+          <h2 className="text-base font-extrabold text-navy dark:text-slate-100">สรุปผลการปฏิบัติงานรายบุคคล</h2>
+          <p className="text-xs text-slate-400 mt-0.5">คลิกที่รายชื่อเพื่อเปิดดูประวัติการถูกตรวจประเมินและคอมเมนต์รายหัวข้อ</p>
+        </div>
+
+        {employeeStats.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-audit-hairline bg-white dark:bg-slate-800/50 p-8 flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center">
+              <Users2 className="w-6 h-6 text-slate-400" />
             </div>
             <div>
-              <div className="text-sm font-bold text-navy mb-1">ยังไม่มีข้อมูลพนักงาน</div>
-              <div className="text-xs text-audit-slate">ข้อมูลจะแสดงหลังจากมีการตรวจประเมินและระบุผู้รับผิดชอบแต่ละหัวข้อ</div>
+              <div className="text-sm font-bold text-navy dark:text-slate-100 mb-1">ยังไม่มีข้อมูลพนักงาน</div>
+              <div className="text-xs text-slate-400">ข้อมูลจะแสดงหลังจากมีการตรวจประเมินและระบุผู้รับผิดชอบ</div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Most Tagged */}
+            <div className="bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
+              <h3 className="text-sm font-bold text-navy dark:text-slate-100 mb-4">
+                พนักงานที่ได้รับมอบหมาย (Tag) มากที่สุด
+              </h3>
+              <div className="space-y-1">
+                {mostTagged.map((d, idx) => (
+                  <button
+                    key={d.employee.id}
+                    onClick={() => setSelectedEmpModalId(d.employee.id)}
+                    className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
+                  >
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-xl bg-audit-tint dark:bg-slate-700 flex items-center justify-center flex-shrink-0 text-xs font-black text-audit-blue dark:text-blue-400">
+                      {d.employee.firstName?.[0]}{d.employee.lastName?.[0]}
+                    </div>
+                    {/* Name */}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-navy dark:text-slate-100 truncate group-hover:text-audit-blue transition-colors">
+                        {d.employee.firstName} {d.employee.lastName}
+                      </div>
+                      <div className="text-xs text-slate-400 truncate">{d.employee.role} · {branchName(d.employee.branchId)}</div>
+                    </div>
+                    {/* Badges */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs font-black text-audit-blue bg-audit-tint dark:bg-blue-900/30 px-2 py-1 rounded-lg border border-blue-200 dark:border-blue-800">
+                        {d.tagCount} ครั้ง
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Most Flagged */}
+            <div className="bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
+              <h3 className="text-sm font-bold text-navy dark:text-slate-100 mb-4">
+                พนักงานที่มีข้อบกพร่องมากที่สุด
+              </h3>
+              <div className="space-y-1">
+                {mostFlagged.map((d, idx) => (
+                  <button
+                    key={d.employee.id}
+                    onClick={() => setSelectedEmpModalId(d.employee.id)}
+                    className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left group"
+                  >
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center flex-shrink-0 text-xs font-black text-rose-600 dark:text-rose-400">
+                      {d.employee.firstName?.[0]}{d.employee.lastName?.[0]}
+                    </div>
+                    {/* Name */}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-navy dark:text-slate-100 truncate group-hover:text-rose-600 transition-colors">
+                        {d.employee.firstName} {d.employee.lastName}
+                      </div>
+                      <div className="text-xs text-slate-400 truncate">{d.employee.role} · {branchName(d.employee.branchId)}</div>
+                    </div>
+                    {/* Badges */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs font-black text-rose-700 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded-lg border border-rose-200 dark:border-rose-800">
+                        {d.failCount} รายการ
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-rose-400 transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-audit-hairline bg-audit-hairline mt-4">
-          {/* Most Tagged Staff */}
-          <div className="bg-white p-5 border-b md:border-b-0 md:border-r border-audit-hairline">
-            <h3 className="text-sm font-bold text-navy mb-3">พนักงานที่ได้รับรับมอบหมาย (Tag) มากที่สุด</h3>
-            <div className="divide-y divide-audit-hairline">
-              {mostTagged.map((d, idx) => (
-                <button
-                  key={d.employee.id}
-                  onClick={() => setSelectedEmpModalId(d.employee.id)}
-                  className="w-full flex items-center justify-between py-2.5 hover:bg-slate-50 transition text-left text-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-slate-400 font-bold w-4 flex-shrink-0">{idx + 1}</span>
-                    <div className="truncate">
-                      <div className="font-bold text-navy truncate">
-                        {d.employee.firstName} {d.employee.lastName}
-                      </div>
-                      <div className="text-xs text-slate-500 truncate">
-                        {d.employee.role} · {branchName(d.employee.branchId)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-xs text-slate-500">เฉลี่ย {d.avg.toFixed(1)}</span>
-                    <span className="font-mono font-extrabold text-audit-blue bg-audit-tint px-2 py-0.5 rounded-sm text-xs border border-audit-blue">
-                      {d.tagCount} ครั้ง
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Most Flagged Defect Staff */}
-          <div className="bg-white p-5">
-            <h3 className="text-sm font-bold text-navy mb-3">พนักงานที่มีข้อบกพร่องมากที่สุด (Defects)</h3>
-            <div className="divide-y divide-audit-hairline">
-              {mostFlagged.map((d, idx) => (
-                <button
-                  key={d.employee.id}
-                  onClick={() => setSelectedEmpModalId(d.employee.id)}
-                  className="w-full flex items-center justify-between py-2.5 hover:bg-slate-50 transition text-left text-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-slate-400 font-bold w-4 flex-shrink-0">{idx + 1}</span>
-                    <div className="truncate">
-                      <div className="font-bold text-navy truncate">
-                        {d.employee.firstName} {d.employee.lastName}
-                      </div>
-                      <div className="text-xs text-slate-500 truncate">
-                        {d.employee.role} · {branchName(d.employee.branchId)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-xs text-slate-500">เฉลี่ย {d.avg.toFixed(1)}</span>
-                    <span className="font-mono font-extrabold text-status-bad bg-status-badBg px-2 py-0.5 rounded-sm text-xs border border-status-bad">
-                      {d.failCount} ครั้ง
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Employee Audit Feedback & Comments Modal */}
+      {/* ── Employee Detail Modal ── */}
       {selectedEmpModal && (
-        <div className="fixed inset-0 bg-navy/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border border-emerald-200">
+        <div className="fixed inset-0 bg-navy/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
             {/* Modal Header */}
             <div className="bg-slate-900 p-5 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3.5">
@@ -498,7 +507,7 @@ export default function DashboardOverview({
                   </div>
                   <h2 className="text-base font-black text-white">
                     {selectedEmpModal.firstName} {selectedEmpModal.lastName}
-                    {selectedEmpModal.nickname && <span className="text-white/80 font-normal"> ({selectedEmpModal.nickname})</span>}
+                    {selectedEmpModal.nickname && <span className="text-white/70 font-normal"> ({selectedEmpModal.nickname})</span>}
                   </h2>
                   <p className="text-xs text-slate-300 font-medium">
                     {selectedEmpModal.role} · {branchName(selectedEmpModal.branchId)}
@@ -513,38 +522,30 @@ export default function DashboardOverview({
               </button>
             </div>
 
-            {/* Modal Sub-header Stats & Filter Tabs */}
-            <div className="bg-slate-50 border-b border-slate-200 p-4 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Sub-header */}
+            <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3 text-xs">
-                <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 font-semibold text-slate-700">
-                  ถูกระบุในแบบประเมิน: <strong className="text-emerald-700 font-bold">{selectedEmpHistory.length} ครั้ง</strong>
+                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-semibold text-slate-700 dark:text-slate-300">
+                  ถูกระบุ: <strong className="text-emerald-700 dark:text-emerald-400">{selectedEmpHistory.length} ครั้ง</strong>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 font-semibold text-slate-700">
-                  พบข้อบกพร่อง: <strong className="text-rose-600 font-bold">{selectedEmpHistory.filter((h) => h.status !== "ผ่าน").length} ครั้ง</strong>
+                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-semibold text-slate-700 dark:text-slate-300">
+                  ข้อบกพร่อง: <strong className="text-rose-600 dark:text-rose-400">{selectedEmpHistory.filter((h) => h.status !== "ผ่าน").length} ครั้ง</strong>
                 </span>
               </div>
-              <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-lg text-xs font-semibold">
-                <button
-                  onClick={() => setEmpFilterTab("all")}
-                  className={`px-3 py-1 rounded-md transition ${empFilterTab === "all" ? "bg-white text-slate-900 shadow-2xs font-bold" : "text-slate-600 hover:text-slate-900"}`}
-                >
+              <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-slate-700 p-1 rounded-xl text-xs font-semibold">
+                <button onClick={() => setEmpFilterTab("all")} className={`px-3 py-1 rounded-lg transition ${empFilterTab === "all" ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm font-bold" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}>
                   ทั้งหมด ({selectedEmpHistory.length})
                 </button>
-                <button
-                  onClick={() => setEmpFilterTab("defects")}
-                  className={`px-3 py-1 rounded-md transition ${empFilterTab === "defects" ? "bg-white text-rose-700 shadow-2xs font-bold" : "text-slate-600 hover:text-slate-900"}`}
-                >
+                <button onClick={() => setEmpFilterTab("defects")} className={`px-3 py-1 rounded-lg transition ${empFilterTab === "defects" ? "bg-white dark:bg-slate-600 text-rose-700 shadow-sm font-bold" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}>
                   ข้อบกพร่อง ({selectedEmpHistory.filter((h) => h.status !== "ผ่าน").length})
                 </button>
               </div>
             </div>
 
-            {/* Modal Body: Comments & Items Timeline List */}
-            <div className="p-5 overflow-y-auto space-y-4 flex-1">
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-3 flex-1">
               {selectedEmpHistory.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs font-medium">
-                  ยังไม่มีประวัติการระบุพนักงานในแบบประเมิน
-                </div>
+                <div className="p-8 text-center text-slate-400 text-xs font-medium">ยังไม่มีประวัติการระบุพนักงานในแบบประเมิน</div>
               ) : (
                 selectedEmpHistory
                   .filter((h) => empFilterTab === "all" || h.status !== "ผ่าน")
@@ -554,56 +555,24 @@ export default function DashboardOverview({
                     const [y, m, d] = h.date.split("-");
                     const thDate = `${d}/${m}/${y}`;
                     return (
-                      <div
-                        key={`${h.auditId}-${h.itemId}-${idx}`}
-                        className={`p-4 rounded-xl border transition-all ${
-                          isFail
-                            ? "bg-rose-50/40 border-rose-200"
-                            : "bg-white border-slate-200/80 hover:border-slate-300 shadow-2xs"
-                        }`}
-                      >
-                        {/* Entry Header */}
-                        <div className="flex items-center justify-between text-xs mb-2 border-b border-slate-100 pb-2">
-                          <div className="flex items-center gap-2 font-semibold text-slate-600">
-                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-bold">
-                              📅 {thDate}
-                            </span>
+                      <div key={`${h.auditId}-${h.itemId}-${idx}`} className={`p-4 rounded-xl border ${isFail ? "bg-rose-50/40 border-rose-200 dark:bg-rose-900/10 dark:border-rose-900" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm"}`}>
+                        <div className="flex items-center justify-between text-xs mb-2 border-b border-slate-100 dark:border-slate-700 pb-2">
+                          <div className="flex items-center gap-2 font-semibold text-slate-600 dark:text-slate-400">
+                            <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-bold">📅 {thDate}</span>
                             <span>{branchName(h.branchId)}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2.5 py-0.5 rounded font-extrabold text-xs ${
-                                isFail ? "bg-rose-100 text-rose-800 border border-rose-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                              }`}
-                            >
-                              คะแนน {h.score} / 5 ({h.status})
-                            </span>
-                          </div>
+                          <span className={`px-2.5 py-0.5 rounded font-extrabold text-xs ${isFail ? "bg-rose-100 text-rose-800 border border-rose-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"}`}>
+                            คะแนน {h.score} / 5 ({h.status})
+                          </span>
                         </div>
-
-                        {/* Assessment Section & Item Title */}
                         <div className="mb-2.5">
-                          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                            {details.sectionName}
-                          </div>
-                          <div className="text-sm font-bold text-navy">
-                            {details.itemTitle}
-                          </div>
+                          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{details.sectionName}</div>
+                          <div className="text-sm font-bold text-navy dark:text-slate-100">{details.itemTitle}</div>
                         </div>
-
-                        {/* Comment / Note Box */}
-                        <div
-                          className={`p-3 rounded-xl text-xs leading-relaxed flex items-start gap-2.5 border ${
-                            isFail
-                              ? "bg-rose-50 text-rose-950 border-rose-200 font-medium"
-                              : "bg-emerald-50/70 text-emerald-950 border-emerald-200/60 font-medium"
-                          }`}
-                        >
+                        <div className={`p-3 rounded-xl text-xs leading-relaxed flex items-start gap-2.5 border ${isFail ? "bg-rose-50 text-rose-950 border-rose-200" : "bg-emerald-50/70 text-emerald-950 border-emerald-200/60"}`}>
                           <span className="text-base shrink-0 mt-0.5">{isFail ? "⚠️" : "💬"}</span>
                           <div className="flex-1">
-                            <div className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">
-                              ข้อคิดเห็น / คอมเมนต์จากผู้ตรวจ ({h.auditor})
-                            </div>
+                            <div className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">ข้อคิดเห็น / คอมเมนต์จากผู้ตรวจ ({h.auditor})</div>
                             <p className="font-bold text-xs">{h.note || "ไม่มีคอมเมนต์เพิ่มเติม"}</p>
                           </div>
                         </div>
@@ -614,28 +583,136 @@ export default function DashboardOverview({
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-slate-50 border-t border-slate-200 px-5 py-3.5 flex items-center justify-between gap-3 shrink-0">
-              <span className="text-xs text-slate-500 font-medium">
-                สามารถคลิกปุ่มขวามือเพื่อดูโปรไฟล์และจัดการตำแหน่งพนักงาน
-              </span>
+            <div className="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-5 py-3.5 flex items-center justify-between gap-3 shrink-0">
+              <span className="text-xs text-slate-400 font-medium">สามารถคลิกปุ่มขวามือเพื่อดูโปรไฟล์และจัดการตำแหน่ง</span>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSelectedEmpModalId(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold transition shadow-2xs"
-                >
+                <button onClick={() => setSelectedEmpModalId(null)} className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 text-xs font-bold transition">
                   ปิดหน้าต่าง
                 </button>
                 <button
-                  onClick={() => {
-                    const empId = selectedEmpModalId;
-                    setSelectedEmpModalId(null);
-                    if (empId) onSelectEmployee(empId);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
+                  onClick={() => { const id = selectedEmpModalId; setSelectedEmpModalId(null); if (id) onSelectEmployee(id); }}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5"
                 >
-                  ดูโปรไฟล์เต็มและจัดการตำแหน่ง <ChevronRight className="w-3.5 h-3.5" />
+                  ดูโปรไฟล์เต็ม <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Section Defect Detail Modal ── */}
+      {selectedSectionModalName && (
+        <div className="fixed inset-0 bg-navy/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
+            {/* Modal Header */}
+            <div className="bg-slate-900 p-5 text-white flex items-center justify-between shrink-0">
+              <div>
+                <div className="text-xs text-blue-400 font-semibold mb-0.5">
+                  รายละเอียดข้อบกพร่องตามหมวดประเมิน
+                </div>
+                <h2 className="text-base font-black text-white">
+                  {selectedSectionModalName}
+                </h2>
+              </div>
+              <button
+                onClick={() => setSelectedSectionModalName(null)}
+                className="text-white/70 hover:text-white p-2 rounded-xl hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Sub-header */}
+            <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 shrink-0 flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                พบข้อบกพร่องทั้งหมด: <strong className="text-rose-600 dark:text-rose-400 font-bold">{selectedSectionHistory.length} รายการ</strong>
+              </span>
+              <span className="text-xs text-slate-400">คลิกที่ชื่อพนักงานเพื่อสลับไปดูประวัติพนักงาน</span>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-3 flex-1">
+              {selectedSectionHistory.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-xs font-medium">
+                  ✅ ไม่พบข้อบกพร่องในหมวดนี้
+                </div>
+              ) : (
+                selectedSectionHistory.map((h, idx) => {
+                  const details = getItemDetails(h.itemId);
+                  const [y, m, d] = h.date.split("-");
+                  const thDate = `${d}/${m}/${y}`;
+                  const isCritical = h.status === "ร้ายแรง";
+
+                  return (
+                    <div
+                      key={`${h.auditId}-${h.itemId}-${idx}`}
+                      className="p-4 rounded-xl border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700 pb-2">
+                        <div className="flex items-center gap-2 font-semibold text-slate-600 dark:text-slate-400">
+                          <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-bold">
+                            📅 {thDate}
+                          </span>
+                          <span>{branchName(h.branchId)}</span>
+                        </div>
+                        <span
+                          className={`px-2.5 py-0.5 rounded font-extrabold text-xs ${
+                            isCritical
+                              ? "bg-rose-100 text-rose-800 border border-rose-300"
+                              : "bg-amber-100 text-amber-800 border border-amber-300"
+                          }`}
+                        >
+                          คะแนน {h.score} / 5 ({h.status})
+                        </span>
+                      </div>
+
+                      <div className="text-sm font-bold text-navy dark:text-slate-100">
+                        {details.itemTitle}
+                      </div>
+
+                      {h.responsibleIds.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                          <span className="text-slate-400 font-medium">ผู้รับผิดชอบ:</span>
+                          {h.responsibleIds.map((empId) => {
+                            const emp = EMPLOYEES.find((e) => e.id === empId);
+                            if (!emp) return null;
+                            return (
+                              <button
+                                key={empId}
+                                onClick={() => {
+                                  setSelectedSectionModalName(null);
+                                  setSelectedEmpModalId(empId);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold hover:underline"
+                              >
+                                👤 {emp.firstName} {emp.lastName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div className="p-3 rounded-xl text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                        <div className="text-xs font-bold text-slate-400 mb-1">
+                          ข้อคิดเห็น / คอมเมนต์จากผู้ตรวจ ({h.auditor})
+                        </div>
+                        <p className="font-bold text-xs">{h.note || "ไม่มีคอมเมนต์เพิ่มเติม"}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-5 py-3.5 flex justify-end shrink-0">
+              <button
+                onClick={() => setSelectedSectionModalName(null)}
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 text-xs font-bold transition"
+              >
+                ปิดหน้าต่าง
+              </button>
             </div>
           </div>
         </div>

@@ -9,31 +9,61 @@ interface KPICardProps {
   value: string | number;
   sub?: string;
   accent?: string;
+  trend?: { value: number; label?: string }; // +/- % or count
 }
 
-export default function KPICard({ icon: Icon, label, value, sub, accent }: KPICardProps) {
+export default function KPICard({ icon: Icon, label, value, sub, accent = "#2C5AA0", trend }: KPICardProps) {
+  const trendPositive = trend && trend.value > 0;
+  const trendNegative = trend && trend.value < 0;
+
   return (
-    <div className="gridgeist-card p-3.5 sm:p-4 min-h-[108px] flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-150 overflow-hidden">
-      <div className="flex items-center justify-between gap-1.5 mb-2">
-        <span className="text-xs sm:text-xs font-bold text-slate-500 dark:text-slate-400 tracking-tight truncate">{label}</span>
+    <div
+      className="gridgeist-card relative flex flex-col justify-between min-h-[112px] p-4 sm:p-5 overflow-hidden hover:shadow-md transition-all duration-200"
+      style={{ borderLeft: `4px solid ${accent}` }}
+    >
+      {/* Background accent glow */}
+      <div
+        className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-5 -translate-y-6 translate-x-6 pointer-events-none"
+        style={{ backgroundColor: accent }}
+      />
+
+      {/* Top row: label + icon */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-tight">{label}</span>
         <div
-          className="w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center bg-slate-100/70 dark:bg-slate-800/80 shrink-0 transition-colors"
-          style={{ color: accent || "#2C5AA0" }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 opacity-90"
+          style={{ backgroundColor: `${accent}18`, color: accent }}
         >
-          <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <Icon className="w-4 h-4" />
         </div>
       </div>
-      <div className="flex flex-col justify-end">
-        <div className="text-xl sm:text-2xl font-black text-navy dark:text-slate-100 tracking-tight leading-none mb-1">{value}</div>
-        {sub ? (
-          <div className="text-xs sm:text-xs text-slate-400 dark:text-slate-500 font-medium leading-tight truncate" title={sub}>
-            {sub}
-          </div>
-        ) : (
-          <div className="text-xs sm:text-xs text-transparent font-medium leading-tight select-none">
-            -
-          </div>
-        )}
+
+      {/* Value */}
+      <div className="flex flex-col gap-0.5">
+        <div className="text-2xl font-black text-navy dark:text-slate-100 tracking-tight leading-none">
+          {value}
+        </div>
+        <div className="flex items-center gap-1.5 mt-1">
+          {sub && (
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium truncate" title={sub}>
+              {sub}
+            </span>
+          )}
+          {trend && (
+            <span
+              className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${
+                trendPositive
+                  ? "text-emerald-700 bg-emerald-50"
+                  : trendNegative
+                  ? "text-rose-700 bg-rose-50"
+                  : "text-slate-500 bg-slate-100"
+              }`}
+            >
+              {trendPositive ? "▲" : trendNegative ? "▼" : "—"}
+              {trend.label || Math.abs(trend.value)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
