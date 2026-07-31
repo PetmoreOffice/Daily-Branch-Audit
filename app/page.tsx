@@ -52,6 +52,22 @@ export default function Home() {
   const [auditsList, setAuditsList] = useState<Audit[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
+  // Sync page state with URL hash for browser back/forward support
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash) setPage(hash);
+    };
+    if (window.location.hash) handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  const handleSetPage = useCallback((newPage: string) => {
+    setPage(newPage);
+    window.location.hash = newPage;
+  }, []);
+
   const loadAuditsFromDb = useCallback(async () => {
     try {
       const dbAudits = await getAudits();
@@ -185,7 +201,7 @@ export default function Home() {
       role={role}
       setRole={setRole}
       page={page}
-      setPage={setPage}
+      setPage={handleSetPage}
       dark={dark}
       setDark={setDark}
       username={username}
