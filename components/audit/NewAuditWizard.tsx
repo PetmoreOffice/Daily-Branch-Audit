@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Star, Camera, Search, Check, AlertCircle, MapPin, X, UserCheck, CheckCircle2, CalendarDays, FileText } from "lucide-react";
+import { Star, Camera, Search, Check, AlertCircle, MapPin, X, UserCheck, CheckCircle2, CalendarDays } from "lucide-react";
 import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchHeadName, getAuditorCandidates, formatDateDDMMYYYY } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 import { getEmployees, getBranches } from "@/app/actions/employee";
-import { compressImageFile } from "@/lib/imageUtils";
 
 interface NewAuditWizardProps {
   onSubmit: (audit: Audit) => void;
@@ -191,8 +190,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
 
 
-  // Section 6 items (I20) are optional and only filled if additional defects are found
-  const allAnswered = ALL_ITEMS.filter((it) => !it.id.startsWith("I2")).every((it) => answers[it.id]?.score !== undefined);
+  const allAnswered = ALL_ITEMS.every((it) => answers[it.id]?.score !== undefined);
 
   function handleSubmit() {
     if (!branchId) {
@@ -204,30 +202,15 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
       return;
     }
     const items: AuditItemResult[] = ALL_ITEMS.map((it) => {
-      const a = answers[it.id];
-      if (!a && it.id.startsWith("I2")) {
-        return {
-          itemId: it.id,
-          score: 5,
-          note: "",
-          photosBefore: [],
-          photosAfter: [],
-          responsibleIds: [],
-          status: "ผ่าน",
-        };
-      }
-      const score = a?.score !== undefined ? a.score : 5;
+      const a = answers[it.id] || emptyAnswer(it.id);
+      const score = a.score || 0;
       return {
         itemId: it.id,
         score,
-        note: a?.note || "",
-        reportText: a?.reportText || "",
-        startDate: a?.startDate || date,
-        completedDate: a?.completedDate || date,
-        isResolved: a?.isResolved || false,
-        photosBefore: a?.photosBefore || [],
-        photosAfter: a?.photosAfter || [],
-        responsibleIds: a?.responsibleIds || [],
+        note: a.note || "",
+        photosBefore: a.photosBefore || [],
+        photosAfter: a.photosAfter || [],
+        responsibleIds: a.responsibleIds || [],
         status: statusFromScore(score, it.maxScore),
       };
     });
@@ -381,16 +364,9 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
       {/* Checklist Sections */}
       {TEMPLATE.sections.map((sec) => (
         <div key={sec.name} className="gridgeist-card p-5 space-y-4">
-          <h3 className="text-sm font-extrabold text-navy border-b border-audit-hairline pb-2 flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-audit-blue"></span>
-              หมวด: {sec.name}
-            </span>
-            {sec.name.startsWith("6") && (
-              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                (ไม่บังคับกรอก - ระบุเฉพาะเมื่อพบปัญหา)
-              </span>
-            )}
+          <h3 className="text-sm font-extrabold text-navy border-b border-audit-hairline pb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-audit-blue"></span>
+            หมวด: {sec.name}
           </h3>
 
           <div className="space-y-4">
@@ -458,29 +434,12 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                           accept="image/*"
                           multiple
                           className="hidden"
-                          onChange={async (e) => {
+                          onChange={(e) => {
                             const files = Array.from(e.target.files || []);
-                            if (files.length === 0) return;
-                            for (const file of files) {
-                              try {
-                                const compressedBase64 = await compressImageFile(file, 1000, 1000, 0.72);
-                                if (compressedBase64) {
-                                  setAnswers((prev) => {
-                                    const current = prev[item.id]?.photosBefore || [];
-                                    return {
-                                      ...prev,
-                                      [item.id]: {
-                                        ...emptyAnswer(item.id),
-                                        ...prev[item.id],
-                                        photosBefore: [...current, compressedBase64],
-                                      },
-                                    };
-                                  });
-                                }
-                              } catch (err) {
-                                console.error("Error compressing image:", err);
-                              }
-                            }
+                            const urls = files.map((f) => URL.createObjectURL(f));
+                            updateItem(item.id, {
+                              photosBefore: [...(ans.photosBefore || []), ...urls],
+                            });
                           }}
                         />
                         + แนบรูปถ่าย ({ans.photosBefore?.length || 0})
@@ -519,7 +478,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                     </div>
                   </div>
 
-                  {/* Note / Reference Input */}
+                  {/* Note / Reference Input - available for ALL items */}
                   <div className="pt-2">
                     <label className={`block text-xs font-bold mb-1 ${isDefect ? "text-status-bad" : "text-navy"}`}>
                       {isDefect ? "ข้อเสนอแนะ / รายละเอียดที่ต้องแก้ไข (อ้างอิง):" : "หมายเหตุ / รายละเอียดอ้างอิงเพิ่มเติม:"}
@@ -540,99 +499,6 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                       }`}
                     />
                   </div>
-
-                  {/* Section 6 & Defect Action Plan Fields */}
-                  {(isDefect || item.id.startsWith("I2")) && (
-                    <div className="mt-3 p-3.5 bg-blue-50/60 dark:bg-slate-800/80 rounded-xl border border-blue-200/80 dark:border-slate-700 space-y-3">
-                      <div className="text-xs font-extrabold text-blue-950 dark:text-blue-200 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                        รายงานรายละเอียดการตรวจพบปัญหาและการติดตามแก้ไข
-                      </div>
-
-                      {/* Report Textarea */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          รายงานรายละเอียดปัญหา / ขั้นตอนแก้ไข:
-                        </label>
-                        <textarea
-                          rows={2}
-                          placeholder="พิมพ์รายละเอียดปัญหาที่พบ และขั้นตอนการดำเนินการแก้ไข..."
-                          value={ans.reportText || ""}
-                          onChange={(e) => updateItem(item.id, { reportText: e.target.value })}
-                          className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      {/* Start Date & Target Completion Date */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            📅 วันที่เริ่มดำเนินการ:
-                          </label>
-                          <input
-                            type="date"
-                            value={ans.startDate || date}
-                            onChange={(e) => updateItem(item.id, { startDate: e.target.value })}
-                            className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            🏁 วันที่แล้วเสร็จ (Target Date):
-                          </label>
-                          <input
-                            type="date"
-                            value={ans.completedDate || date}
-                            onChange={(e) => updateItem(item.id, { completedDate: e.target.value })}
-                            className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Photo After Upload & Confirmation Button */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-blue-200/60 dark:border-slate-700">
-                        <div className="flex items-center gap-2">
-                          <label className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-300 dark:border-slate-700 hover:border-blue-500 rounded-lg text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 cursor-pointer transition">
-                            <Camera className="w-3.5 h-3.5" />
-                            + แนบรูปหลังแก้ไข (After: {ans.photosAfter?.length || 0})
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              className="hidden"
-                              onChange={async (e) => {
-                                const files = Array.from(e.target.files || []);
-                                for (const file of files) {
-                                  try {
-                                    const base64 = await compressImageFile(file, 1000, 1000, 0.72);
-                                    updateItem(item.id, {
-                                      photosAfter: [...(ans.photosAfter || []), base64],
-                                    });
-                                  } catch (err) {
-                                    console.error("Error compressing photo after:", err);
-                                  }
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
-
-                        {/* Confirm Resolution Button */}
-                        <button
-                          type="button"
-                          onClick={() => updateItem(item.id, { isResolved: !ans.isResolved })}
-                          className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 ${
-                            ans.isResolved
-                              ? "bg-emerald-600 text-white shadow-xs"
-                              : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-emerald-500 hover:text-white"
-                          }`}
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          {ans.isResolved ? "✓ ยืนยันการแก้ไขแล้วเสร็จ" : "กดยืนยันการแก้ไขแล้วเสร็จ"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}

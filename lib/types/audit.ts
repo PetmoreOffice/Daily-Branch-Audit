@@ -7,10 +7,9 @@ export interface Branch {
   id: string;
   code: string;
   name: string;
-  zone?: string;
-  zoneName?: string;
-  province?: string;
-  status?: string;
+  zone: string;
+  province: string;
+  status: string;
 }
 
 export interface EmployeeAssignment {
@@ -24,13 +23,13 @@ export interface Employee {
   code: string;
   firstName: string;
   lastName: string;
-  nickname?: string | null;
+  nickname?: string;
   role: string;
   branchId: string;
-  zone?: string;
-  email?: string | null;
-  phone?: string | null;
-  assignments?: EmployeeAssignment[];
+  zone: string;
+  email: string;
+  phone: string;
+  assignments: EmployeeAssignment[];
 }
 
 export interface AuditTemplateItem {
@@ -57,10 +56,6 @@ export interface AuditItemResult {
   itemId: string;
   score: number;
   note: string;
-  reportText?: string;
-  startDate?: string;
-  completedDate?: string;
-  isResolved?: boolean;
   photosBefore: string[];
   photosAfter: string[];
   responsibleIds: string[];

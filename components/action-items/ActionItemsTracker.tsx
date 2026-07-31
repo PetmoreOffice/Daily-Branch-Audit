@@ -4,11 +4,10 @@ import React, { useState, useMemo } from "react";
 import {
   Wrench, AlertTriangle, CheckCircle2, Clock, Search, BookOpen,
   Camera, User, Building2, Calendar, Check, X, ShieldAlert,
-  FileCheck2, ArrowRight, FileText
+  FileCheck2, ArrowRight
 } from "lucide-react";
 import { Audit } from "@/lib/types/audit";
-import { BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, branchName, formatDateDDMMYYYY } from "@/lib/mock-data";
-import { compressImageFile } from "@/lib/imageUtils";
+import { BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, branchName } from "@/lib/mock-data";
 
 interface ActionItemsTrackerProps {
   audits: Audit[];
@@ -111,11 +110,6 @@ const RESOLUTION_GUIDELINES: Record<string, { guide: string; category: string; p
     guide: "ปฏิบัติตามนโยบายและข้อบังคับของบริษัทอย่างเคร่งครัด",
     priority: "ปกติ",
   },
-  I20: {
-    category: "6. การตรวจพบปัญหาที่ต้องแก้ไข",
-    guide: "ผู้รับผิดชอบต้องจัดทำรายงานบันทึกรายละเอียดปัญหา กำหนดวันที่เริ่มและวันที่แล้วเสร็จ พร้อมแนบภาพถ่ายหลักฐาน Before/After ก่อนกดยืนยันการแก้ไขแล้วเสร็จ",
-    priority: "สูง",
-  },
 };
 
 function getGuideForItem(itemId: string, itemName: string) {
@@ -155,9 +149,6 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
       score: number;
       status: string;
       note: string;
-      reportText?: string;
-      startDate?: string;
-      completedDate?: string;
       responsibleIds: string[];
       photosBefore: string[];
       photosAfter: string[];
@@ -165,8 +156,7 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
 
     audits.forEach((a) => {
       a.items.forEach((i) => {
-        // Only collect items from Section 6 (I20) or items with explicit problem reports
-        if (i.itemId.startsWith("I2") || Boolean(i.reportText)) {
+        if (i.status !== "ผ่าน") {
           list.push({
             auditId: a.id,
             date: a.date,
@@ -176,9 +166,6 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
             score: i.score,
             status: i.status,
             note: i.note || "",
-            reportText: i.reportText || "",
-            startDate: i.startDate || a.date,
-            completedDate: i.completedDate || a.date,
             responsibleIds: i.responsibleIds || [],
             photosBefore: i.photosBefore || [],
             photosAfter: i.photosAfter || [],
@@ -510,25 +497,6 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
                       </div>
                     )}
 
-                    {/* Report Text & Tracking Dates */}
-                    {defect.reportText && (
-                      <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 text-xs text-blue-950 dark:text-blue-200 space-y-1">
-                        <div className="text-xs font-extrabold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5" /> รายงานรายละเอียดการพบปัญหา:
-                        </div>
-                        <p className="font-semibold">{defect.reportText}</p>
-                      </div>
-                    )}
-
-                    {/* Start & Completion Dates */}
-                    {(defect.startDate || defect.completedDate) && (
-                      <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-semibold bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span>📅 เริ่มต้น: <strong className="text-slate-900 dark:text-slate-100">{formatDateDDMMYYYY(defect.startDate || "")}</strong></span>
-                        <span>·</span>
-                        <span>🏁 แล้วเสร็จ: <strong className="text-slate-900 dark:text-slate-100">{formatDateDDMMYYYY(defect.completedDate || "")}</strong></span>
-                      </div>
-                    )}
-
                     {/* Auditor Comment */}
                     {defect.note && (
                       <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200">
@@ -630,42 +598,15 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
             <form onSubmit={handleMarkResolved} className="space-y-4 text-xs">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  แนบรูปถ่ายหลักฐานหลังแก้ไข (Auto-compressed):
+                  ชื่อไฟล์รูปภาพหลักฐานหลังแก้ไข (Photo After):
                 </label>
-                <div className="space-y-2">
-                  <label className="w-full py-2.5 px-3 border-2 border-dashed border-blue-300 dark:border-slate-700 hover:border-blue-500 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800 transition flex items-center justify-center gap-2 cursor-pointer">
-                    <Camera className="w-4 h-4" />
-                    <span>เลือกรูปถ่ายหลักฐาน ({resolvePhoto ? "แนบแล้ว 1 รูป" : "ยังไม่ได้เลือกรูป"})</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            const compressedBase64 = await compressImageFile(file, 1000, 1000, 0.72);
-                            setResolvePhoto(compressedBase64);
-                          } catch (err) {
-                            console.error("Error compressing resolve photo:", err);
-                          }
-                        }
-                      }}
-                    />
-                  </label>
-                  {resolvePhoto && resolvePhoto.startsWith("data:") && (
-                    <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-emerald-500 shadow-xs">
-                      <img src={resolvePhoto} alt="preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setResolvePhoto("")}
-                        className="absolute top-1 right-1 w-4 h-4 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  placeholder="เช่น fixed_photo_01.jpg"
+                  value={resolvePhoto}
+                  onChange={(e) => setResolvePhoto(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
+                />
               </div>
 
               <div>
