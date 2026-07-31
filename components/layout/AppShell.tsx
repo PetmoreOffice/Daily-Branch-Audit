@@ -14,6 +14,7 @@ import {
   UserCircle2,
   Menu,
   X,
+  ChevronLeft,
 } from "lucide-react";
 import { UserRole } from "@/lib/types/audit";
 
@@ -65,16 +66,26 @@ export default function AppShell({
       <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100 dark:bg-slate-950 text-navy dark:text-slate-100 transition-colors items-start">
         
         {/* Mobile Header Bar */}
-        <header className="w-full bg-navy text-white flex items-center justify-between p-3.5 border-b border-navy-dark lg:hidden sticky top-0 z-40 shadow-sm">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-audit-blue flex items-center justify-center">
-              <ClipboardCheck className="w-4 h-4 text-white" />
+        <header className="lg:hidden bg-navy text-white flex items-center justify-between p-3 border-b border-navy-dark sticky top-0 z-40 shadow-sm">
+          {page !== "dashboard" ? (
+            <button
+              onClick={() => setPage("dashboard")}
+              className="flex items-center gap-1 text-white hover:text-slate-200 transition focus:outline-none bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm font-bold">กลับหน้าหลัก</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-audit-blue flex items-center justify-center">
+                <ClipboardCheck className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="font-extrabold text-sm tracking-tight leading-tight">Branch Audit</div>
+                <div className="text-xs text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
+              </div>
             </div>
-            <div>
-              <div className="font-extrabold text-sm tracking-tight leading-tight">Branch Audit</div>
-              <div className="text-xs text-slate-300 font-medium">ระบบตรวจประเมินสาขา</div>
-            </div>
-          </div>
+          )}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition focus:outline-none"
