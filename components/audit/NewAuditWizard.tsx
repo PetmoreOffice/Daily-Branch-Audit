@@ -398,6 +398,191 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
               const score = ans.score || 0;
               const isDefect = answers[item.id]?.score !== undefined && score <= (item.minScore || 3);
 
+              if (item.id === "I20" || item.id.startsWith("I2")) {
+                return (
+                  <div key={item.id} className="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative group">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-300 group-hover:bg-blue-500 transition-colors" />
+                    
+                    <div className="p-6 space-y-5">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div>
+                          <h4 className="font-extrabold text-base text-slate-800 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-500" />
+                            {item.name}
+                          </h4>
+                          <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed max-w-lg">
+                            โปรดระบุรายละเอียดปัญหาที่พบจากการตรวจประเมิน และแนวทางแก้ไข พร้อมแนบภาพประกอบ 
+                            หากสาขาอยู่ในเกณฑ์มาตรฐานและไม่มีข้อบกพร่องใดๆ สามารถเว้นว่างและข้ามหมวดหมู่นี้ได้ทันที
+                          </p>
+                        </div>
+                        <div className="shrink-0 bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-full text-xs font-bold border border-slate-200 flex items-center gap-1.5 shadow-sm">
+                          <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                          <span className="hidden sm:inline">ไม่จำเป็นต้องกรอกหากไม่มีปัญหา (Optional)</span>
+                          <span className="sm:hidden">ข้ามได้ (Optional)</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-slate-100">
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                              📝 รายละเอียดปัญหา / ขั้นตอนแก้ไข
+                            </label>
+                            <textarea
+                              rows={3}
+                              placeholder="เช่น พื้นที่จัดเก็บสินค้าหลังร้านไม่เป็นระเบียบ ได้ทำการแจ้งพนักงานให้จัดเรียงใหม่..."
+                              value={ans.reportText || ""}
+                              onChange={(e) => updateItem(item.id, { reportText: e.target.value })}
+                              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none shadow-inner"
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                📅 วันที่เริ่มดำเนินการ
+                              </label>
+                              <input
+                                type="date"
+                                value={ans.startDate || date}
+                                onChange={(e) => updateItem(item.id, { startDate: e.target.value })}
+                                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                🏁 กำหนดเวลาแล้วเสร็จ
+                              </label>
+                              <input
+                                type="date"
+                                value={ans.completedDate || date}
+                                onChange={(e) => updateItem(item.id, { completedDate: e.target.value })}
+                                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                            📸 ภาพถ่ายอ้างอิง (Before & After)
+                          </label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Before Photo */}
+                            <div className="space-y-2">
+                              <label className="w-full py-4 border-2 border-dashed border-slate-300 hover:border-amber-400 rounded-xl text-xs font-bold text-slate-500 hover:text-amber-600 bg-slate-50 hover:bg-amber-50/50 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer">
+                                <Camera className="w-5 h-5" />
+                                <span className="text-center">แนบรูปปัญหา<br/>(Before: {ans.photosBefore?.length || 0})</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const files = Array.from(e.target.files || []);
+                                    for (const file of files) {
+                                      try {
+                                        const base64 = await compressImageFile(file, 1000, 1000, 0.72);
+                                        updateItem(item.id, {
+                                          photosBefore: [...(ans.photosBefore || []), base64],
+                                        });
+                                      } catch (err) {
+                                        console.error("Error compressing photo:", err);
+                                      }
+                                    }
+                                  }}
+                                />
+                              </label>
+                              {/* Thumbnails */}
+                              {(ans.photosBefore?.length || 0) > 0 && (
+                                <div className="flex gap-1.5 overflow-x-auto py-1 max-w-full shrink-0 snap-x">
+                                  {ans.photosBefore!.map((url, i) => (
+                                    <div key={i} className="relative shrink-0 snap-center">
+                                      <img src={url} alt={`before-${i}`} className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                                      <button
+                                        type="button"
+                                        onClick={() => updateItem(item.id, {
+                                          photosBefore: ans.photosBefore!.filter((_, j) => j !== i),
+                                        })}
+                                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center leading-none shadow-sm hover:bg-red-600 transition"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* After Photo */}
+                            <div className="space-y-2">
+                              <label className="w-full py-4 border-2 border-dashed border-slate-300 hover:border-emerald-400 rounded-xl text-xs font-bold text-slate-500 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50/50 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer">
+                                <Camera className="w-5 h-5" />
+                                <span className="text-center">แนบรูปแก้ไขแล้ว<br/>(After: {ans.photosAfter?.length || 0})</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const files = Array.from(e.target.files || []);
+                                    for (const file of files) {
+                                      try {
+                                        const base64 = await compressImageFile(file, 1000, 1000, 0.72);
+                                        updateItem(item.id, {
+                                          photosAfter: [...(ans.photosAfter || []), base64],
+                                        });
+                                      } catch (err) {
+                                        console.error("Error compressing photo:", err);
+                                      }
+                                    }
+                                  }}
+                                />
+                              </label>
+                              {/* Thumbnails */}
+                              {(ans.photosAfter?.length || 0) > 0 && (
+                                <div className="flex gap-1.5 overflow-x-auto py-1 max-w-full shrink-0 snap-x">
+                                  {ans.photosAfter!.map((url, i) => (
+                                    <div key={i} className="relative shrink-0 snap-center">
+                                      <img src={url} alt={`after-${i}`} className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                                      <button
+                                        type="button"
+                                        onClick={() => updateItem(item.id, {
+                                          photosAfter: ans.photosAfter!.filter((_, j) => j !== i),
+                                        })}
+                                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center leading-none shadow-sm hover:bg-red-600 transition"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => updateItem(item.id, { isResolved: !ans.isResolved })}
+                              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center w-full gap-2 shadow-sm ${
+                                ans.isResolved
+                                  ? "bg-emerald-500 text-white ring-2 ring-emerald-500 ring-offset-1"
+                                  : "bg-slate-800 text-white hover:bg-emerald-600 hover:shadow-md"
+                              }`}
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              {ans.isResolved ? "ยืนยันการแก้ไขเสร็จสมบูรณ์" : "ทำเครื่องหมายว่าแก้ไขแล้ว"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Normal Item Render
               return (
                 <div key={item.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -457,12 +642,18 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                           accept="image/*"
                           multiple
                           className="hidden"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const files = Array.from(e.target.files || []);
-                            const urls = files.map((f) => URL.createObjectURL(f));
-                            updateItem(item.id, {
-                              photosBefore: [...(ans.photosBefore || []), ...urls],
-                            });
+                            for (const file of files) {
+                              try {
+                                const base64 = await compressImageFile(file, 1000, 1000, 0.72);
+                                updateItem(item.id, {
+                                  photosBefore: [...(ans.photosBefore || []), base64],
+                                });
+                              } catch (err) {
+                                console.error("Error compressing photo:", err);
+                              }
+                            }
                           }}
                         />
                         + แนบรูปถ่าย ({ans.photosBefore?.length || 0})
@@ -522,100 +713,6 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                       }`}
                     />
                   </div>
-
-                  {/* Section 6 / Item 6.1 (I20) Resolution Action Card */}
-                  {(item.id === "I20" || item.id.startsWith("I2")) && (
-                    <div className="mt-3 p-4 bg-blue-50/70 dark:bg-slate-800 rounded-xl border border-blue-200 dark:border-slate-700 space-y-3 shadow-xs">
-                      <div className="text-xs font-extrabold text-blue-950 dark:text-blue-200 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                        รายงานรายละเอียดการตรวจพบปัญหา 6.1 และการติดตามแก้ไข
-                      </div>
-
-                      {/* 1. Report Textarea */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          📝 รายงานรายละเอียดปัญหา / ขั้นตอนแก้ไข:
-                        </label>
-                        <textarea
-                          rows={2}
-                          placeholder="พิมพ์รายละเอียดปัญหาที่พบ และขั้นตอนการดำเนินการแก้ไข..."
-                          value={ans.reportText || ""}
-                          onChange={(e) => updateItem(item.id, { reportText: e.target.value })}
-                          className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      {/* 2. Start Date & Completion Date */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            📅 วันที่เริ่มดำเนินการ:
-                          </label>
-                          <input
-                            type="date"
-                            value={ans.startDate || date}
-                            onChange={(e) => updateItem(item.id, { startDate: e.target.value })}
-                            className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            🏁 วันที่แล้วเสร็จ (Target Date):
-                          </label>
-                          <input
-                            type="date"
-                            value={ans.completedDate || date}
-                            onChange={(e) => updateItem(item.id, { completedDate: e.target.value })}
-                            className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                      </div>
-
-                      {/* 3. Before & After Photos + Confirm Resolution Button */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-blue-200/60 dark:border-slate-700">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* After Photo Upload */}
-                          <label className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-300 dark:border-slate-700 hover:border-blue-500 rounded-lg text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 cursor-pointer transition">
-                            <Camera className="w-3.5 h-3.5" />
-                            + แนบรูปหลังแก้ไข (After: {ans.photosAfter?.length || 0})
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              className="hidden"
-                              onChange={async (e) => {
-                                const files = Array.from(e.target.files || []);
-                                for (const file of files) {
-                                  try {
-                                    const base64 = await compressImageFile(file, 1000, 1000, 0.72);
-                                    updateItem(item.id, {
-                                      photosAfter: [...(ans.photosAfter || []), base64],
-                                    });
-                                  } catch (err) {
-                                    console.error("Error compressing photo after:", err);
-                                  }
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
-
-                        {/* 4. Confirm Resolution Button */}
-                        <button
-                          type="button"
-                          onClick={() => updateItem(item.id, { isResolved: !ans.isResolved })}
-                          className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 shadow-xs ${
-                            ans.isResolved
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-emerald-500 hover:text-white"
-                          }`}
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          {ans.isResolved ? "✓ ยืนยันการแก้ไขแล้วเสร็จ" : "กดยืนยันการแก้ไขแล้วเสร็จ"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
