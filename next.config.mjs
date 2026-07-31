@@ -6,9 +6,6 @@ const nextConfig = {
     minimumCacheTTL: 86400,
   },
   compress: true,
-  experimental: {
-    optimizeCss: true,
-  },
 };
 
 export default nextConfig;
