@@ -407,7 +407,6 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>
                           <h4 className="font-extrabold text-base text-slate-800 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-blue-500" />
                             {item.name}
                           </h4>
                           <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed max-w-lg">
@@ -426,7 +425,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                         <div className="space-y-4">
                           <div>
                             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                              📝 รายละเอียดปัญหา / ขั้นตอนแก้ไข
+                              รายละเอียดปัญหา / ขั้นตอนแก้ไข
                             </label>
                             <textarea
                               rows={3}
@@ -440,7 +439,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                📅 วันที่เริ่มดำเนินการ
+                                วันที่เริ่มดำเนินการ
                               </label>
                               <input
                                 type="date"
@@ -451,7 +450,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                             </div>
                             <div>
                               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                🏁 กำหนดเวลาแล้วเสร็จ
+                                กำหนดเวลาแล้วเสร็จ
                               </label>
                               <input
                                 type="date"
@@ -465,7 +464,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
                         <div className="space-y-4">
                           <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                            📸 ภาพถ่ายอ้างอิง (Before & After)
+                            ภาพถ่ายอ้างอิง (Before & After)
                           </label>
                           <div className="grid grid-cols-2 gap-3">
                             {/* Before Photo */}
