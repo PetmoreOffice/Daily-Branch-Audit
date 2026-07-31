@@ -188,8 +188,8 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
 
       {/* Main Grid: Employee List & History Drawer */}
       <div className="flex flex-col lg:flex-row gap-5">
-        {/* List Table */}
-        <div className={`flex-1 min-w-0 bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden`}>
+        {/* List Table (Hidden on mobile if an employee is selected) */}
+        <div className={`flex-1 min-w-0 bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden ${selectedEmp ? 'hidden lg:block' : ''}`}>
           {filteredEmployees.length === 0 ? (
             <div className="p-12 flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
