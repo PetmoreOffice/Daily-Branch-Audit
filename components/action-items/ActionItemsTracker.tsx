@@ -116,11 +116,6 @@ const RESOLUTION_GUIDELINES: Record<string, { guide: string; category: string; p
     guide: "ผู้รับผิดชอบต้องจัดทำรายงานบันทึกรายละเอียดปัญหา กำหนดวันที่เริ่มและวันที่แล้วเสร็จ พร้อมแนบภาพถ่ายหลักฐาน Before/After ก่อนกดยืนยันการแก้ไขแล้วเสร็จ",
     priority: "สูง",
   },
-  I21: {
-    category: "6. การตรวจพบปัญหาที่ต้องแก้ไข",
-    guide: "ดำเนินการแก้ไขปัญหาที่ตรวจพบเพิ่มเติมและรายงานผู้จัดการสาขาทันที",
-    priority: "ปานกลาง",
-  },
 };
 
 function getGuideForItem(itemId: string, itemName: string) {

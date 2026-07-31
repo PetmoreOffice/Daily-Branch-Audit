@@ -159,7 +159,6 @@ export const TEMPLATE: AuditTemplate = {
       name: "6. การตรวจพบปัญหาที่ต้องแก้ไข",
       items: [
         { id: "I20", name: "6.1 การตรวจพบปัญหาที่ต้องแก้ไข", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
-        { id: "I21", name: "6.2 อื่นๆ", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
       ],
     },
   ],
