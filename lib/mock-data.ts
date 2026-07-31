@@ -264,11 +264,7 @@ export const INITIAL_AUDITS: Audit[] = [
     items: [
       { itemId: "I01", score: 1, status: "ร้ายแรง", note: "เปิดร้านล่าช้า 15 นาที ประตูกะเช้าเปิด 09:05น.", photosBefore: ["photo-0"], photosAfter: [], responsibleIds: ["E14"] },
       { itemId: "I02", score: 1, status: "ร้ายแรง", note: "เงินทอนไม่ครบ ขาด 500 บาท", photosBefore: ["photo-0"], photosAfter: [], responsibleIds: ["E08"] },
-      { itemId: "I04", score: 1, status: "ร้ายแรง", note: "พนักงานไม่ทักทายลูกค้า", photosBefore: [], photosAfter: [], responsibleIds: ["E12"] },
-      { itemId: "I10", score: 0, status: "ร้ายแรง", note: "พบสินค้าหมดอายุบนชั้นวาง 3 รายการไม่ได้สแกนตัดจ่าย", photosBefore: ["photo-1"], photosAfter: [], responsibleIds: ["E10"] },
-      { itemId: "I11", score: 1, status: "ร้ายแรง", note: "ป้ายราคาไม่ตรงกับ POS", photosBefore: [], photosAfter: [], responsibleIds: ["E10"] },
-      { itemId: "I14", score: 1, status: "ร้ายแรง", note: "ฝุ่นจับเชลฟ์สินค้ากลุ่มอาหารแมว", photosBefore: [], photosAfter: [], responsibleIds: ["E14"] },
-      { itemId: "I20", score: 1, status: "ร้ายแรง", note: "พบสินค้าชำรุดเสียหายบริเวณหลังร้าน", reportText: "ดำเนินการแยกสินค้าชำรุดและแจ้งเคลมซัพพลายเออร์", startDate: "2026-07-29", completedDate: "2026-07-30", photosBefore: ["photo-defect-01"], photosAfter: [], responsibleIds: ["E14"] },
+      { itemId: "I20", score: 1, status: "ร้ายแรง", note: "พบสินค้าชำรุดเสียหายบริเวณหลังร้าน และป้ายราคาไม่ตรง", reportText: "ดำเนินการแยกสินค้าชำรุดและแจ้งเคลมซัพพลายเออร์ เปลี่ยนป้ายราคาใหม่", startDate: "2026-07-29", completedDate: "2026-07-30", photosBefore: ["photo-defect-01"], photosAfter: [], responsibleIds: ["E14"] },
     ],
   },
   {

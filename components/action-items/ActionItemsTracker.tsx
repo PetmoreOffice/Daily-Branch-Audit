@@ -165,7 +165,8 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
 
     audits.forEach((a) => {
       a.items.forEach((i) => {
-        if (i.status !== "ผ่าน" || i.itemId.startsWith("I2")) {
+        // Only collect items from Section 6 (I20) or items with explicit problem reports
+        if (i.itemId.startsWith("I2") || Boolean(i.reportText)) {
           list.push({
             auditId: a.id,
             date: a.date,

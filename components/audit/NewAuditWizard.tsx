@@ -191,7 +191,8 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
 
 
-  const allAnswered = ALL_ITEMS.every((it) => answers[it.id]?.score !== undefined);
+  // Section 6 items (I20) are optional and only filled if additional defects are found
+  const allAnswered = ALL_ITEMS.filter((it) => !it.id.startsWith("I2")).every((it) => answers[it.id]?.score !== undefined);
 
   function handleSubmit() {
     if (!branchId) {
@@ -203,15 +204,30 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
       return;
     }
     const items: AuditItemResult[] = ALL_ITEMS.map((it) => {
-      const a = answers[it.id] || emptyAnswer(it.id);
-      const score = a.score || 0;
+      const a = answers[it.id];
+      if (!a && it.id.startsWith("I2")) {
+        return {
+          itemId: it.id,
+          score: 5,
+          note: "",
+          photosBefore: [],
+          photosAfter: [],
+          responsibleIds: [],
+          status: "ผ่าน",
+        };
+      }
+      const score = a?.score !== undefined ? a.score : 5;
       return {
         itemId: it.id,
         score,
-        note: a.note || "",
-        photosBefore: a.photosBefore || [],
-        photosAfter: a.photosAfter || [],
-        responsibleIds: a.responsibleIds || [],
+        note: a?.note || "",
+        reportText: a?.reportText || "",
+        startDate: a?.startDate || date,
+        completedDate: a?.completedDate || date,
+        isResolved: a?.isResolved || false,
+        photosBefore: a?.photosBefore || [],
+        photosAfter: a?.photosAfter || [],
+        responsibleIds: a?.responsibleIds || [],
         status: statusFromScore(score, it.maxScore),
       };
     });
@@ -365,9 +381,16 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
       {/* Checklist Sections */}
       {TEMPLATE.sections.map((sec) => (
         <div key={sec.name} className="gridgeist-card p-5 space-y-4">
-          <h3 className="text-sm font-extrabold text-navy border-b border-audit-hairline pb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-audit-blue"></span>
-            หมวด: {sec.name}
+          <h3 className="text-sm font-extrabold text-navy border-b border-audit-hairline pb-2 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-audit-blue"></span>
+              หมวด: {sec.name}
+            </span>
+            {sec.name.startsWith("6") && (
+              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                (ไม่บังคับกรอก - ระบุเฉพาะเมื่อพบปัญหา)
+              </span>
+            )}
           </h3>
 
           <div className="space-y-4">
