@@ -66,7 +66,7 @@ export default function AppShell({
       <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100 dark:bg-slate-950 text-navy dark:text-slate-100 transition-colors items-start">
         
         {/* Mobile Header Bar */}
-        <header className="lg:hidden bg-navy text-white flex items-center justify-between p-3 border-b border-navy-dark sticky top-0 z-40 shadow-sm">
+        <header className="w-full lg:hidden bg-navy text-white flex items-center justify-between p-3 border-b border-navy-dark sticky top-0 z-40 shadow-sm">
           {page !== "dashboard" ? (
             <button
               onClick={() => setPage("dashboard")}
