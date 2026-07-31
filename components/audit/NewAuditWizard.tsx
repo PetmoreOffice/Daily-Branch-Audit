@@ -3,6 +3,7 @@ import { Star, Camera, Search, Check, AlertCircle, MapPin, X, UserCheck, CheckCi
 import { BRANCHES, TEMPLATE, ALL_ITEMS, employeesAtBranchOnDate, statusFromScore, EMPLOYEES, formatAuditorName, getBranchHeadName, getAuditorCandidates, formatDateDDMMYYYY } from "@/lib/mock-data";
 import { Audit, AuditItemResult, Employee } from "@/lib/types/audit";
 import { getEmployees, getBranches } from "@/app/actions/employee";
+import { compressImageFile } from "@/lib/imageUtils";
 
 interface NewAuditWizardProps {
   onSubmit: (audit: Audit) => void;
@@ -434,14 +435,13 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                           accept="image/*"
                           multiple
                           className="hidden"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const files = Array.from(e.target.files || []);
                             if (files.length === 0) return;
-                            files.forEach((file) => {
-                              const reader = new FileReader();
-                              reader.onload = (ev) => {
-                                const base64 = ev.target?.result as string;
-                                if (base64) {
+                            for (const file of files) {
+                              try {
+                                const compressedBase64 = await compressImageFile(file, 1000, 1000, 0.72);
+                                if (compressedBase64) {
                                   setAnswers((prev) => {
                                     const current = prev[item.id]?.photosBefore || [];
                                     return {
@@ -449,14 +449,15 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                                       [item.id]: {
                                         ...emptyAnswer(item.id),
                                         ...prev[item.id],
-                                        photosBefore: [...current, base64],
+                                        photosBefore: [...current, compressedBase64],
                                       },
                                     };
                                   });
                                 }
-                              };
-                              reader.readAsDataURL(file);
-                            });
+                              } catch (err) {
+                                console.error("Error compressing image:", err);
+                              }
+                            }
                           }}
                         />
                         + แนบรูปถ่าย ({ans.photosBefore?.length || 0})

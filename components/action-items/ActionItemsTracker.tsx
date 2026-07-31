@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Audit } from "@/lib/types/audit";
 import { BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, branchName } from "@/lib/mock-data";
+import { compressImageFile } from "@/lib/imageUtils";
 
 interface ActionItemsTrackerProps {
   audits: Audit[];
@@ -598,15 +599,42 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
             <form onSubmit={handleMarkResolved} className="space-y-4 text-xs">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  ชื่อไฟล์รูปภาพหลักฐานหลังแก้ไข (Photo After):
+                  แนบรูปถ่ายหลักฐานหลังแก้ไข (Auto-compressed):
                 </label>
-                <input
-                  type="text"
-                  placeholder="เช่น fixed_photo_01.jpg"
-                  value={resolvePhoto}
-                  onChange={(e) => setResolvePhoto(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
-                />
+                <div className="space-y-2">
+                  <label className="w-full py-2.5 px-3 border-2 border-dashed border-blue-300 dark:border-slate-700 hover:border-blue-500 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <Camera className="w-4 h-4" />
+                    <span>เลือกรูปถ่ายหลักฐาน ({resolvePhoto ? "แนบแล้ว 1 รูป" : "ยังไม่ได้เลือกรูป"})</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const compressedBase64 = await compressImageFile(file, 1000, 1000, 0.72);
+                            setResolvePhoto(compressedBase64);
+                          } catch (err) {
+                            console.error("Error compressing resolve photo:", err);
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                  {resolvePhoto && resolvePhoto.startsWith("data:") && (
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-emerald-500 shadow-xs">
+                      <img src={resolvePhoto} alt="preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setResolvePhoto("")}
+                        className="absolute top-1 right-1 w-4 h-4 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
