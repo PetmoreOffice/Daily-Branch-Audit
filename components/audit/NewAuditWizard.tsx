@@ -436,7 +436,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
                             />
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                 วันที่เริ่มดำเนินการ
