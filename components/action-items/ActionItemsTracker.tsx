@@ -138,7 +138,7 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
   const [resolvePhoto, setResolvePhoto] = useState<string>("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // Flatten all failed audit items
+  // Flatten all reported problems from Section 6.1 (I20)
   const allDefects = useMemo(() => {
     const list: {
       auditId: string;
@@ -149,6 +149,10 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
       score: number;
       status: string;
       note: string;
+      reportText: string;
+      startDate: string;
+      completedDate: string;
+      isResolved: boolean;
       responsibleIds: string[];
       photosBefore: string[];
       photosAfter: string[];
@@ -156,7 +160,8 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
 
     audits.forEach((a) => {
       a.items.forEach((i) => {
-        if (i.status !== "ผ่าน") {
+        // Track ONLY problems from Item 6.1 (I20)
+        if (i.itemId === "I20" && i.status !== "ผ่าน") {
           list.push({
             auditId: a.id,
             date: a.date,
@@ -166,6 +171,10 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
             score: i.score,
             status: i.status,
             note: i.note || "",
+            reportText: i.reportText || "",
+            startDate: i.startDate || "",
+            completedDate: i.completedDate || "",
+            isResolved: i.isResolved || false,
             responsibleIds: i.responsibleIds || [],
             photosBefore: i.photosBefore || [],
             photosAfter: i.photosAfter || [],

@@ -113,6 +113,10 @@ model AuditItemResult {
   score          Int
   note           String?
   status         String   @default("ผ่าน")
+  reportText     String?
+  startDate      String?
+  completedDate  String?
+  isResolved     Boolean  @default(false)
   photosBefore   String[] @default([])
   photosAfter    String[] @default([])
   responsibleIds String[] @default([])

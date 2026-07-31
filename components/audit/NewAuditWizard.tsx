@@ -191,7 +191,10 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
 
 
-  const allAnswered = ALL_ITEMS.every((it) => answers[it.id]?.score !== undefined);
+  const allAnswered = ALL_ITEMS.every((it) => {
+    if (it.id === "I20") return true;
+    return answers[it.id]?.score !== undefined;
+  });
 
   function handleSubmit() {
     if (!branchId) {
@@ -204,15 +207,34 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
     }
     const items: AuditItemResult[] = ALL_ITEMS.map((it) => {
       const a = answers[it.id] || emptyAnswer(it.id);
-      const score = a.score || 0;
+      
+      let score = a.score || 0;
+      let status: "ผ่าน" | "ต้องปรับปรุง" | "ร้ายแรง" = statusFromScore(score, it.maxScore);
+
+      // Special handling for I20 (6.1)
+      if (it.id === "I20") {
+        const hasProblem = a.reportText?.trim() || (a.photosBefore && a.photosBefore.length > 0);
+        if (hasProblem) {
+          score = 3;
+          status = "ต้องปรับปรุง";
+        } else {
+          score = 5;
+          status = "ผ่าน";
+        }
+      }
+
       return {
         itemId: it.id,
         score,
         note: a.note || "",
+        reportText: a.reportText,
+        startDate: a.startDate,
+        completedDate: a.completedDate,
+        isResolved: a.isResolved,
         photosBefore: a.photosBefore || [],
         photosAfter: a.photosAfter || [],
         responsibleIds: a.responsibleIds || [],
-        status: statusFromScore(score, it.maxScore),
+        status,
       };
     });
 
