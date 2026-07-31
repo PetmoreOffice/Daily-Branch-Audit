@@ -92,7 +92,21 @@ export default function Home() {
     let realtimeSub: ReturnType<typeof supabase.channel> | null = null;
 
     async function initSession() {
-      // Check existing session
+      // 1. Check Mock Session (for local test logins)
+      try {
+        const mockRole = localStorage.getItem("mock_role");
+        const mockName = localStorage.getItem("mock_name");
+        if (mockRole && mockName) {
+          setRole(mockRole as UserRole);
+          setUsername(mockName);
+          setIsAuthenticated(true);
+          await Promise.all([syncStaticData(), loadAuditsFromDb()]);
+          setAuthLoading(false);
+          return;
+        }
+      } catch (e) {}
+
+      // 2. Check existing session
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
@@ -168,6 +182,10 @@ export default function Home() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+    try {
+      localStorage.removeItem("mock_role");
+      localStorage.removeItem("mock_name");
+    } catch (e) {}
     // onAuthStateChange will handle resetting state
   }
 

@@ -111,6 +111,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       // 2. For designated Admin email (mis_01@newgenman.co.th / mis_01), authenticate seamlessly as Admin
       if (inferRoleFromEmail(cleanUser) === "admin") {
         setIsLoading(false);
+        try {
+          localStorage.setItem("mock_role", "admin");
+          localStorage.setItem("mock_name", "ผู้ดูแลระบบ (Admin)");
+        } catch (e) {}
         onLogin("admin", "ผู้ดูแลระบบ (Admin)");
         return;
       }
