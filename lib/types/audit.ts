@@ -56,6 +56,10 @@ export interface AuditItemResult {
   itemId: string;
   score: number;
   note: string;
+  reportText?: string;
+  startDate?: string;
+  completedDate?: string;
+  isResolved?: boolean;
   photosBefore: string[];
   photosAfter: string[];
   responsibleIds: string[];
