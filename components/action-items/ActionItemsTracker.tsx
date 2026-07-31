@@ -4,10 +4,10 @@ import React, { useState, useMemo } from "react";
 import {
   Wrench, AlertTriangle, CheckCircle2, Clock, Search, BookOpen,
   Camera, User, Building2, Calendar, Check, X, ShieldAlert,
-  FileCheck2, ArrowRight
+  FileCheck2, ArrowRight, FileText
 } from "lucide-react";
 import { Audit } from "@/lib/types/audit";
-import { BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, branchName } from "@/lib/mock-data";
+import { BRANCHES, EMPLOYEES, TEMPLATE, ALL_ITEMS, branchName, formatDateDDMMYYYY } from "@/lib/mock-data";
 import { compressImageFile } from "@/lib/imageUtils";
 
 interface ActionItemsTrackerProps {
@@ -111,6 +111,16 @@ const RESOLUTION_GUIDELINES: Record<string, { guide: string; category: string; p
     guide: "ปฏิบัติตามนโยบายและข้อบังคับของบริษัทอย่างเคร่งครัด",
     priority: "ปกติ",
   },
+  I20: {
+    category: "6. การตรวจพบปัญหาที่ต้องแก้ไข",
+    guide: "ผู้รับผิดชอบต้องจัดทำรายงานบันทึกรายละเอียดปัญหา กำหนดวันที่เริ่มและวันที่แล้วเสร็จ พร้อมแนบภาพถ่ายหลักฐาน Before/After ก่อนกดยืนยันการแก้ไขแล้วเสร็จ",
+    priority: "สูง",
+  },
+  I21: {
+    category: "6. การตรวจพบปัญหาที่ต้องแก้ไข",
+    guide: "ดำเนินการแก้ไขปัญหาที่ตรวจพบเพิ่มเติมและรายงานผู้จัดการสาขาทันที",
+    priority: "ปานกลาง",
+  },
 };
 
 function getGuideForItem(itemId: string, itemName: string) {
@@ -150,6 +160,9 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
       score: number;
       status: string;
       note: string;
+      reportText?: string;
+      startDate?: string;
+      completedDate?: string;
       responsibleIds: string[];
       photosBefore: string[];
       photosAfter: string[];
@@ -157,7 +170,7 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
 
     audits.forEach((a) => {
       a.items.forEach((i) => {
-        if (i.status !== "ผ่าน") {
+        if (i.status !== "ผ่าน" || i.itemId.startsWith("I2")) {
           list.push({
             auditId: a.id,
             date: a.date,
@@ -167,6 +180,9 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
             score: i.score,
             status: i.status,
             note: i.note || "",
+            reportText: i.reportText || "",
+            startDate: i.startDate || a.date,
+            completedDate: i.completedDate || a.date,
             responsibleIds: i.responsibleIds || [],
             photosBefore: i.photosBefore || [],
             photosAfter: i.photosAfter || [],
@@ -495,6 +511,25 @@ export default function ActionItemsTracker({ audits }: ActionItemsTrackerProps) 
                             </span>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Report Text & Tracking Dates */}
+                    {defect.reportText && (
+                      <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 text-xs text-blue-950 dark:text-blue-200 space-y-1">
+                        <div className="text-xs font-extrabold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5" /> รายงานรายละเอียดการพบปัญหา:
+                        </div>
+                        <p className="font-semibold">{defect.reportText}</p>
+                      </div>
+                    )}
+
+                    {/* Start & Completion Dates */}
+                    {(defect.startDate || defect.completedDate) && (
+                      <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-semibold bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span>📅 เริ่มต้น: <strong className="text-slate-900 dark:text-slate-100">{formatDateDDMMYYYY(defect.startDate || "")}</strong></span>
+                        <span>·</span>
+                        <span>🏁 แล้วเสร็จ: <strong className="text-slate-900 dark:text-slate-100">{formatDateDDMMYYYY(defect.completedDate || "")}</strong></span>
                       </div>
                     )}
 

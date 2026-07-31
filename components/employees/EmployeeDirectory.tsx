@@ -89,9 +89,8 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
 
   const handleAddEmployee = async () => {
     try {
-      setIsSaving(true);
       const created = await addEmployee(newEmp).catch(() => null);
-      const addedObj = created || addMockEmployee(newEmp);
+      const addedObj: any = created || newEmp;
       addMockEmployee(addedObj);
       await loadData();
       setShowAddModal(false);
