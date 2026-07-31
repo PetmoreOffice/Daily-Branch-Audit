@@ -155,7 +155,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-2 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -205,7 +205,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
           ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100/70 border-b border-audit-hairline text-navy font-bold uppercase tracking-wider">
+              <thead className="bg-slate-100/70 border-b border-audit-hairline text-navy font-bold uppercase tracking-wider whitespace-nowrap">
                 <tr>
                   <th className="p-3.5">รหัส</th>
                   <th className="p-3.5">ชื่อ-นามสกุล</th>
@@ -218,7 +218,7 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
                 {filteredEmployees.map((e) => (
                   <tr
                     key={e.id}
-                    className={`hover:bg-slate-50 transition cursor-pointer ${
+                    className={`hover:bg-slate-50 transition cursor-pointer whitespace-nowrap ${
                       selectedEmp?.id === e.id ? "bg-audit-tint/50 font-semibold" : ""
                     }`}
                     onClick={() => setSelectedEmp(e)}

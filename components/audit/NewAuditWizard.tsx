@@ -258,7 +258,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
 
   if (step === 1) {
     return (
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="px-3 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-extrabold text-navy tracking-tight">เริ่มการตรวจประเมินสาขาใหม่</h1>
           <p className="text-xs font-medium text-audit-slate">ระบุวันที่ สาขา และพิกัดสถานที่ก่อนทำแบบประเมิน</p>
@@ -283,7 +283,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
           </div>
         </div>
 
-        <div className="gridgeist-card p-6 space-y-4 max-w-3xl">
+        <div className="gridgeist-card p-4 sm:p-6 space-y-4 max-w-3xl">
           <div>
             <label className="block text-xs font-bold text-navy mb-1">วันที่ทำการตรวจประเมิน (DD/MM/YYYY)</label>
             <DateInputDDMMYYYY value={date} onChange={(newIso) => setDate(newIso)} />
@@ -368,7 +368,7 @@ export default function NewAuditWizard({ onSubmit, auditorName }: NewAuditWizard
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-2 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
       {/* Step Header */}
       <div className="flex items-center justify-between bg-navy text-white p-4 rounded-xl shadow-md">
         <div>

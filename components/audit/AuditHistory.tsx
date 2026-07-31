@@ -64,7 +64,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-2 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -131,7 +131,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
         <div className="bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100/70 border-b border-audit-hairline text-navy font-bold uppercase tracking-wider">
+              <thead className="bg-slate-100/70 border-b border-audit-hairline text-navy font-bold uppercase tracking-wider whitespace-nowrap">
                 <tr>
                   <th className="p-3.5">รหัสเอกสาร</th>
                   <th className="p-3.5">วันที่ตรวจ</th>
@@ -156,7 +156,7 @@ export default function AuditHistory({ audits }: AuditHistoryProps) {
                       : "bg-status-badBg text-status-bad";
 
                   return (
-                    <tr key={a.id} className="hover:bg-slate-50 transition group">
+                    <tr key={a.id} className="hover:bg-slate-50 transition group whitespace-nowrap">
                       <td className="p-3.5 font-bold text-audit-blue">
                         <button
                           onClick={() => exportAuditToPDF(a)}

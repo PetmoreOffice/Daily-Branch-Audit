@@ -244,7 +244,7 @@ export default function AppShell({
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 min-h-screen w-full bg-slate-100 dark:bg-slate-950">
+        <main className="p-2 sm:p-4 lg:p-8 flex-1 overflow-auto bg-slate-50 dark:bg-[#0A0A0A] w-full">
           {children}
         </main>
       </div>

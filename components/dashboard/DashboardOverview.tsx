@@ -227,7 +227,7 @@ export default function DashboardOverview({
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="p-5 md:p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-2 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
