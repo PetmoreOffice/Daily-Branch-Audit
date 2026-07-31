@@ -130,6 +130,24 @@ export default function DashboardOverview({
 
   const [selectedSectionModalName, setSelectedSectionModalName] = useState<string | null>(null);
 
+  // Pre-compute item lookup map once — O(1) lookup instead of repeated TEMPLATE loops
+  const itemLookupMap = useMemo(() => {
+    const map: Record<string, { sectionName: string; itemTitle: string }> = {};
+    for (const sec of TEMPLATE.sections) {
+      for (const item of sec.items) {
+        map[item.id] = { sectionName: sec.name, itemTitle: item.name };
+        map[item.name] = { sectionName: sec.name, itemTitle: item.name };
+      }
+    }
+    for (const item of ALL_ITEMS as any[]) {
+      if (!map[item.id]) {
+        const sec = TEMPLATE.sections.find((s) => s.items.some((i) => i.id === item.id));
+        map[item.id] = { sectionName: sec?.name || item.section || "หมวดการประเมิน", itemTitle: item.name };
+      }
+    }
+    return map;
+  }, []);
+
   // Employee modal
   const selectedEmpModal = useMemo(() =>
     selectedEmpModalId ? EMPLOYEES.find((e) => e.id === selectedEmpModalId) || null : null,
@@ -199,19 +217,8 @@ export default function DashboardOverview({
 
   function getItemDetails(itemId: string) {
     if (!itemId) return { sectionName: "หมวดการประเมิน", itemTitle: "หัวข้อการประเมิน" };
-    for (const sec of TEMPLATE.sections) {
-      const it = sec.items.find((x) => x.id === itemId);
-      if (it) return { sectionName: sec.name, itemTitle: it.name };
-    }
-    for (const sec of TEMPLATE.sections) {
-      const it = sec.items.find((x) => x.name === itemId);
-      if (it) return { sectionName: sec.name, itemTitle: it.name };
-    }
-    const foundAll = ALL_ITEMS.find((x) => x.id === itemId || x.name === itemId);
-    if (foundAll) {
-      const sec = TEMPLATE.sections.find((s) => s.items.some((i) => i.id === foundAll.id));
-      return { sectionName: sec?.name || foundAll.section || "หมวดการประเมิน", itemTitle: foundAll.name };
-    }
+    const found = itemLookupMap[itemId];
+    if (found) return found;
     if (/^[a-z0-9]{20,}$/i.test(itemId)) return { sectionName: "หมวดการประเมินทั่วไป", itemTitle: "หัวข้อประเมินประจำสาขา" };
     return { sectionName: "หมวดการประเมิน", itemTitle: itemId };
   }

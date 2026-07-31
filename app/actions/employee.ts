@@ -11,11 +11,14 @@ function cleanBranchName(name?: string | null): string {
 // 1. Get all employees with their branch and zone
 export async function getEmployees() {
   try {
-    // Auto-update branch names in DB if old name exists
-    await prisma.branch.updateMany({
-      where: { name: { contains: "เดอะมอลโคราช" } },
-      data: { name: "สาขาหลังเดอะมอลล์" },
-    }).catch(() => {});
+    // Only update branch names if stale records exist (avoid unnecessary write on every login)
+    const staleCount = await prisma.branch.count({ where: { name: { contains: "เดอะมอลโคราช" } } });
+    if (staleCount > 0) {
+      await prisma.branch.updateMany({
+        where: { name: { contains: "เดอะมอลโคราช" } },
+        data: { name: "สาขาหลังเดอะมอลล์" },
+      }).catch(() => {});
+    }
 
     const employees = await prisma.employee.findMany({
       include: {

@@ -1,19 +1,46 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import AppShell from "@/components/layout/AppShell";
-import DashboardOverview from "@/components/dashboard/DashboardOverview";
-import NewAuditWizard from "@/components/audit/NewAuditWizard";
-import AuditHistory from "@/components/audit/AuditHistory";
-import EmployeeDirectory from "@/components/employees/EmployeeDirectory";
-import BranchDirectory from "@/components/branches/BranchDirectory";
-import ActionItemsTracker from "@/components/action-items/ActionItemsTracker";
 import LoginPage, { inferRoleFromEmail } from "@/components/auth/LoginPage";
 import { UserRole, Audit } from "@/lib/types/audit";
 import { syncEmployees, syncBranches } from "@/lib/mock-data";
 import { getEmployees, getBranches } from "@/app/actions/employee";
 import { saveAudit, getAudits } from "@/app/actions/audit";
 import { supabase } from "@/lib/supabase";
+
+// ── Lazy-loaded page components (reduces initial bundle size) ──────────────
+const PageLoader = () => (
+  <div className="p-8 flex justify-center items-center">
+    <div className="w-8 h-8 border-2 border-audit-blue border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+const DashboardOverview = dynamic(
+  () => import("@/components/dashboard/DashboardOverview"),
+  { loading: () => <PageLoader /> }
+);
+const NewAuditWizard = dynamic(
+  () => import("@/components/audit/NewAuditWizard"),
+  { loading: () => <PageLoader /> }
+);
+const AuditHistory = dynamic(
+  () => import("@/components/audit/AuditHistory"),
+  { loading: () => <PageLoader /> }
+);
+const EmployeeDirectory = dynamic(
+  () => import("@/components/employees/EmployeeDirectory"),
+  { loading: () => <PageLoader /> }
+);
+const BranchDirectory = dynamic(
+  () => import("@/components/branches/BranchDirectory"),
+  { loading: () => <PageLoader /> }
+);
+const ActionItemsTracker = dynamic(
+  () => import("@/components/action-items/ActionItemsTracker"),
+  { loading: () => <PageLoader /> }
+);
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

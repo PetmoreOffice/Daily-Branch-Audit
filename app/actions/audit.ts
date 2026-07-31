@@ -97,52 +97,67 @@ async function ensureTemplateInDb() {
       });
     }
 
+    // Pre-fetch ALL items in this section in a single query
+    const existingSectionItems = await prisma.auditItem.findMany({ where: { sectionId: section.id } });
+    const itemsByName = Object.fromEntries(existingSectionItems.map((i) => [i.name, i]));
+
+    // Process each template item, creating/updating only as needed
+    const toCreate: typeof sec.items = [];
+    const toUpdate: { id: string; data: Parameters<typeof prisma.auditItem.update>[0]["data"] }[] = [];
+
     for (const item of sec.items) {
-      // Find item by name + sectionId
-      let dbItem = await prisma.auditItem.findFirst({
-        where: { sectionId: section.id, name: item.name },
-      });
+      const existingByName = itemsByName[item.name];
 
-      if (!dbItem) {
-        // Try to find existing item in section by keywords to update name instead of creating duplicate
-        const keywords = getItemKeyword(item.id);
-        const sectionItems = await prisma.auditItem.findMany({ where: { sectionId: section.id } });
-        dbItem = sectionItems.find((it) => keywords.some((kw) => it.name.toLowerCase().includes(kw))) || null;
-
-        if (dbItem) {
-          dbItem = await prisma.auditItem.update({
-            where: { id: dbItem.id },
-            data: {
-              name: item.name,
-              maxScore: item.maxScore,
-              minScore: item.minScore,
-              requirePhoto: item.requirePhoto,
-              requireResponsible: item.requireResponsible,
-            },
-          });
-        } else {
-          dbItem = await prisma.auditItem.create({
-            data: {
-              sectionId: section.id,
-              name: item.name,
-              maxScore: item.maxScore,
-              minScore: item.minScore,
-              requirePhoto: item.requirePhoto,
-              requireResponsible: item.requireResponsible,
-            },
-          });
+      if (existingByName) {
+        // Update scores if changed
+        if (existingByName.maxScore !== item.maxScore || existingByName.minScore !== item.minScore) {
+          toUpdate.push({ id: existingByName.id, data: { maxScore: item.maxScore, minScore: item.minScore } });
         }
+        itemIdMap[item.id] = existingByName.id;
       } else {
-        // Update maxScore/minScore if changed
-        if (dbItem.maxScore !== item.maxScore || dbItem.minScore !== item.minScore) {
-          dbItem = await prisma.auditItem.update({
-            where: { id: dbItem.id },
-            data: { maxScore: item.maxScore, minScore: item.minScore },
+        // Check keyword fallback using already-fetched items
+        const keywords = getItemKeyword(item.id);
+        const matchByKeyword = existingSectionItems.find((it) =>
+          keywords.some((kw) => it.name.toLowerCase().includes(kw))
+        ) || null;
+
+        if (matchByKeyword) {
+          toUpdate.push({
+            id: matchByKeyword.id,
+            data: {
+              name: item.name,
+              maxScore: item.maxScore,
+              minScore: item.minScore,
+              requirePhoto: item.requirePhoto,
+              requireResponsible: item.requireResponsible,
+            },
           });
+          itemIdMap[item.id] = matchByKeyword.id;
+        } else {
+          toCreate.push(item);
         }
       }
+    }
+
+    // Batch create new items
+    for (const item of toCreate) {
+      const dbItem = await prisma.auditItem.create({
+        data: {
+          sectionId: section.id,
+          name: item.name,
+          maxScore: item.maxScore,
+          minScore: item.minScore,
+          requirePhoto: item.requirePhoto,
+          requireResponsible: item.requireResponsible,
+        },
+      });
       itemIdMap[item.id] = dbItem.id;
     }
+
+    // Batch update changed items
+    await Promise.all(
+      toUpdate.map((u) => prisma.auditItem.update({ where: { id: u.id }, data: u.data }))
+    );
   }
 
   _templateCache = { templateId: template.id, itemIdMap };
@@ -222,14 +237,21 @@ export async function getAudits(): Promise<Audit[]> {
     const audits = await prisma.audit.findMany({
       include: { items: true },
       orderBy: { createdAt: "desc" },
+      take: 200, // Limit to last 200 audits for performance
     });
 
-    // Build a cache of dbBranchId -> mockBranchId
+    // Build branchId -> mockBranchId cache using a single DB query
+    const uniqueDbBranchIds = [...new Set(audits.map((a) => a.branchId))];
+    const dbBranchesForAudits = uniqueDbBranchIds.length > 0
+      ? await prisma.branch.findMany({ where: { id: { in: uniqueDbBranchIds } } })
+      : [];
+    const dbBranchCodeMap = Object.fromEntries(dbBranchesForAudits.map((b) => [b.id, b.code]));
+
     const branchIdCache: Record<string, string> = {};
-    for (const a of audits) {
-      if (!branchIdCache[a.branchId]) {
-        branchIdCache[a.branchId] = await getMockBranchId(a.branchId);
-      }
+    for (const dbBranchId of uniqueDbBranchIds) {
+      const code = dbBranchCodeMap[dbBranchId];
+      const mockBranch = BRANCHES.find((b) => b.code === code || b.id === dbBranchId);
+      branchIdCache[dbBranchId] = mockBranch ? mockBranch.id : dbBranchId;
     }
 
     return audits.map((a) => ({
