@@ -86,13 +86,15 @@ export default function DashboardOverview({
   const monthlyTrend = useMemo(() => {
     return months.map((m) => {
       const items = audits.filter((a) => a.date.startsWith(m)).flatMap((a) => a.items);
-      return { month: m.slice(2), score: Number(avgScore(items).toFixed(2)) };
+      const dateObj = new Date(m + "-01");
+      const formattedMonth = dateObj.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
+      return { month: formattedMonth, score: Number(avgScore(items).toFixed(2)) };
     });
   }, [audits, months]);
 
   const byBranchChart = useMemo(() => {
     return branchAverages.map((x) => ({
-      name: x.branch.code,
+      name: x.branch.name,
       score: Number(x.avg.toFixed(2)),
       branchId: x.branch.id,
     }));
@@ -246,9 +248,13 @@ export default function DashboardOverview({
             className="bg-white dark:bg-slate-800 border border-audit-hairline dark:border-slate-700 rounded-xl text-xs font-semibold px-3 py-2 text-navy dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-audit-blue transition shadow-sm"
           >
             <option value="all">ทุกเดือน (6 เดือนล่าสุด)</option>
-            {months.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
+            {months.map((m) => {
+              const dateObj = new Date(m + "-01");
+              const fullMonth = dateObj.toLocaleDateString("th-TH", { month: "long", year: "numeric" });
+              return (
+                <option key={m} value={m}>{fullMonth}</option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -313,7 +319,7 @@ export default function DashboardOverview({
         {/* Trend Area Chart */}
         <div className="lg:col-span-7 bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-audit-hairline dark:border-slate-700 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-sm font-bold text-navy dark:text-slate-100">คะแนนเฉลี่ยรายเดือน</h3>
+            <h3 className="text-sm font-bold text-navy dark:text-slate-100">คะแนนเฉลี่ยรายเดือนรวมทุกสาขา</h3>
             <p className="text-xs text-slate-400 mt-0.5">แนวโน้ม 6 เดือนล่าสุด</p>
           </div>
           <div className="h-52">
