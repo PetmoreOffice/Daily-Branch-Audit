@@ -179,7 +179,7 @@ export default function AppShell({
         )}
 
         {/* Desktop Sidebar Navigation */}
-        <aside className="hidden lg:flex w-64 h-full bg-navy text-white flex-col p-4 border-r border-navy-dark shrink-0 z-30 overflow-y-auto">
+        <aside className="hidden lg:flex w-64 h-screen bg-navy text-white flex-col p-4 border-r border-navy-dark shrink-0 z-30 overflow-y-auto">
           {/* Brand Header */}
           <div className="flex items-center gap-3 px-2 pb-6 border-b border-white/10">
             <div className="w-9 h-9 rounded-xl bg-audit-blue flex items-center justify-center">
