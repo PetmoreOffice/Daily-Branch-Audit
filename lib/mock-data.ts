@@ -139,7 +139,7 @@ export const TEMPLATE: AuditTemplate = {
       name: "4. ความสะอาด",
       items: [
         { id: "I14", name: "4.1 ไม่มีฝุ่นที่ตัวสินค้า / เชลฟ์ / ความสะอาดบริเวณร้าน", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
-        { id: "I15", name: "อื่นๆ", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
+        { id: "I15", name: "4.2 ความสะอาดและสุขอนามัยส่วนบุคคล (ทรงผม / กลิ่นกาย / เล็บมือ)", maxScore: 5, minScore: 3, requirePhoto: true, requireResponsible: true },
       ],
     },
     {
