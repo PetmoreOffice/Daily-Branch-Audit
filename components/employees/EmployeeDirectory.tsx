@@ -259,10 +259,9 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
 
         {/* Selected Employee Assignment History Details */}
         {selectedEmp && (
-          <div className="w-full lg:w-[40%] xl:w-[35%] shrink-0">
-            <div className="sticky top-6">
-              <div className="bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden">
-                {/* Avatar Header */}
+          <div className="w-full lg:w-[40%] xl:w-[35%] shrink-0 lg:sticky lg:top-6 lg:self-start">
+            <div className="bg-white rounded-xl border border-audit-hairline shadow-sm overflow-hidden">
+              {/* Avatar Header */}
               <div className="bg-navy p-5 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
                   <span className="text-white font-black text-xl">
