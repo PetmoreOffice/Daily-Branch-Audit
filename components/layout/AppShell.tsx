@@ -63,7 +63,7 @@ export default function AppShell({
 
   return (
     <div className={dark ? "dark" : ""}>
-      <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen bg-slate-100 dark:bg-slate-950 text-navy dark:text-slate-100 transition-colors items-start">
+      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100 dark:bg-slate-950 text-navy dark:text-slate-100 transition-colors items-start">
         
         {/* Mobile Header Bar */}
         <header className="w-full lg:hidden bg-navy text-white flex items-center justify-between p-3 border-b border-navy-dark sticky top-0 z-40 shadow-sm">
