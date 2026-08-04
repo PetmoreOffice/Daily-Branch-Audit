@@ -419,11 +419,10 @@ export default function EmployeeDirectory({ selectedEmployeeId }: EmployeeDirect
             </div>
           </div>
         </div>
-      </div>
-    )}
-      </div>
+      )}
+    </div>
 
-      {/* Add Employee Modal */}
+    {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-navy/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-audit-hairline">
